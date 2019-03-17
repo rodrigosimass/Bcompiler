@@ -1,0 +1,14 @@
+public integer rand()
+
+public integer entry (integer argc, string *argv, string *envp) {
+	integer n   := atoi(argv[1]);
+	integer sum := 0;
+	integer i   := 0;
+	number res  := 0;
+
+	for i in 1 upto n do sum := sum + rand();
+	res := sum / n;
+	printi(res);
+
+	entry := 0
+};

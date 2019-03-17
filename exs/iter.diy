@@ -1,0 +1,9 @@
+public number factorial(integer n)
+
+number factorial(integer n) {
+	integer res := 1;
+	integer i := 2;
+
+	for i in 2 upto n do res := res * i;
+	factorial := res;
+}

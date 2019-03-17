@@ -1,0 +1,7 @@
+public number factorial(integer n)
+
+public integer entry (integer argc, string *argv, string *envp) {
+  if argc > 1 then printi(factorial(atoi(argv[1])));
+  else printi(factorial(5));
+  entry := 0
+};

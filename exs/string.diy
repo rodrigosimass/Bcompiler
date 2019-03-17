@@ -1,0 +1,18 @@
+public integer strcmp(string s1, string s2)
+
+integer strcmp(string s1, string s2) {
+	integer val1 := 0;
+	integer val2 := 0;
+	do {
+		if *s1 <> *s2 then break;
+		s1 := s1 + 1;
+		s2 := s2 + 1;
+	}while *s1;
+	val1 := *s1;
+	val2 := *s2;
+	strcmp := *s1 - *s2;
+};
+
+=<public integer entry (integer argc, string *argv, string *envp) {
+  entry := 0
+};=>

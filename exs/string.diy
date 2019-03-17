@@ -1,5 +1,6 @@
 public integer strcmp(string s1, string s2)
 public string strcpy(string dest, string src) 
+public string strchr(string str, integer c)
 
 integer strcmp(string s1, string s2) {
 	integer val1 := 0;
@@ -26,3 +27,12 @@ integer strcpy(string dest, string src) {
 	*dest := 0;
 	strcpy := pointer;
 };
+
+string strchr(string str, integer c) {
+	do {
+		if *str = c then strchr := str;
+		if *str = 0 then strchr := NULL;
+		str := str + 1;
+	}while 1;
+};
+

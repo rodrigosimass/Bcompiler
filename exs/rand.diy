@@ -1,16 +1,15 @@
-public integer rand()
-public void srand(integer s)
-
 integer seed := 100003;
 const integer mul  := 27983;
 const integer mod  := 1000000;
 const integer incr := 149;
 
-integer rand() {
+public integer rand() {
+	integer res := 0;
 	res := (seed * mul + incr) % mod;
 	srand(res);
 	rand := res;
-}
+};
 
-void srand(integer s)
+public void srand(integer s) {
 	seed := s;
+};

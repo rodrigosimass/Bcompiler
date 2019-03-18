@@ -1,7 +1,11 @@
 public number factorial(integer n)
+public void printr(integer i)
+public integer atoi(string s)
+public void println()
 
 public integer entry (integer argc, string *argv, string *envp) {
-  if argc > 1 then printi(factorial(atoi(argv[1])));
-  else printi(factorial(5));
+  if argc > 1 then printr(factorial(atoi(argv[1])));
+  else printr(factorial(5));
+  println()
   entry := 0
 };

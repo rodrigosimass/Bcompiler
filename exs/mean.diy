@@ -1,4 +1,7 @@
 public integer rand()
+public integer atoi(string s)
+public void printr(integer i)
+public void println()
 
 public integer entry (integer argc, string *argv, string *envp) {
 	integer n   := atoi(argv[1]);
@@ -8,7 +11,8 @@ public integer entry (integer argc, string *argv, string *envp) {
 
 	for i in 1 upto n do sum := sum + rand();
 	res := sum / n;
-	printi(res);
+	printr(res);
+	println()
 
 	entry := 0
 };

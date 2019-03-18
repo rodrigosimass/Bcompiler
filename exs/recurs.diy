@@ -1,6 +1,6 @@
-public number factorial(integer n)
+public integer entry (integer argc, string *argv, string *envp)
 
-number factorial(integer n) {
+public number factorial(integer n) {
 	if n = 0 then factorial := 1;
 	factorial := n * factorial(n - 1);
-}
+};

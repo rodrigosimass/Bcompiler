@@ -13,8 +13,7 @@ long l = 0;
 %%
 
 <STR>\"          BEGIN INITIAL;
- //<STR>"\\\""      strcat(yylval.s, yytext);
- <STR>.           ;
+<STR>.           ;
 
 <COM1>"=<"       nested++;
 <COM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
@@ -65,7 +64,6 @@ long l = 0;
 "0"[0-9]*		l = strtol(yytext + 1, 0, 10);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
 "0b"[01]*       l = strtol(yytext + 2, 0, 2);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
 
- //("0"|[1-9][0-9]*)\.[0-9]+([eE][-+]?[1-9][0-9]*)? yylval.d = 
 
 \"			    BEGIN STR;
 

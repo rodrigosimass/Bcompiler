@@ -12,8 +12,9 @@ extern int yylex();
 %}
 
 %union {
-	int i;			/* integer value */
-	char *s;	    /* symbol name or string literal */
+	int i;		
+	double d;
+	char *s;	    
 };
 
 %token <i> INT
@@ -31,7 +32,7 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
 	    int tk;
 	    while ((tk = yylex())) 
 		    if (tk > YYERRCODE)
-			    printf("%d:\t%s\n", tk, yyname[tk]);
+				printf("%d:\t%s\n", tk, yyname[tk]);
 		    else
 			    printf("%d:\t%c\n", tk, tk);
 	    return 0;

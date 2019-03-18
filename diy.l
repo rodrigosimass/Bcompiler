@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "node.h"
 #include "y.tab.h"
+#define MAXINT 2147483647
 void yyerror(char *s);
+int octal(char *s);
 int nested = 0;
+long l = 0;
 %}
 %x COM1 COM2 STR
 %%
@@ -53,11 +55,14 @@ int nested = 0;
 
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
-[a-zA-Z_][a-zA-Z_0-9]* yylval.s = strdup(yytext); return NAME;
+
+[a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
 
 
-[0][0-9]*		yylval.i = strtol(yytext, 0, 10); return INT;
-[1-9][0-9]*     return INT;
+[1-9][0-9]*     l = strtol(yytext   , 0, 10);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
+"0"[0-8]*		l = strtol(yytext + 1, 0, 8);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
+"0"[0-9]*		l = strtol(yytext + 1, 0, 10);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
+"0b"[01]*       l = strtol(yytext + 2, 0, 2);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
 
 \"			    BEGIN STR;
 

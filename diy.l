@@ -10,6 +10,9 @@ int nested = 0;
 %}
 %x COM1 COM2 STR
 %%
+<STR>\"          BEGIN INITIAL;
+<STR>.           ;
+
 <COM1>"=<"       nested++;
 <COM1>"=>"       if(nested==0) BEGIN INITIAL;else nested--;
 <COM1>.|\n       ECHO;
@@ -17,8 +20,41 @@ int nested = 0;
 <COM2>"\n"       BEGIN INITIAL;
 <COM2>.          ECHO;
 
+\"			    BEGIN STR;
+
 "=<"            BEGIN COM1;
 "=="            BEGIN COM2;
+
+"void"          return VOID;
+"integer"       return INTEGER;
+"string"        return STRING;
+"public"        return PUBLIC;
+"number"        return NUMBER;
+"const"         return CONST;
+"if"            return IF;
+"then"          return THEN;
+"else"          return ELSE;
+"while"         return WHILE;
+"do"            return DO;
+"for"           return FOR;
+"in"            return IN;
+"step"          return STEP;
+"upto"          return UPTO;
+"downto"        return DOWNTO;
+"break"         return BREAK;
+"continue"      return CONTINUE;
+
+"="	            return EQ;
+">="	        return GE;
+"<="	        return LE;
+"<>"	        return NE;
+":="	        return ASSIGN;
+"++"            return INC;
+"--"	        return DEC;
+	
+[-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
+
+[ \n\r\t]+		;
 .			    ;
 %%
 int yywrap(void) { return 1; }

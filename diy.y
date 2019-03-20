@@ -18,6 +18,8 @@ extern int yylex();
 };
 
 %token <i> INT
+%token <d> DBL
+%token <s> STR
 %token VOID INTEGER STRING PUBLIC NUMBER CONST IF THEN ELSE 
 %token WHILE DO FOR IN STEP UPTO DOWNTO BREAK CONTINUE NAME
 %token EQ GE LE NE ASSIGN INC DEC

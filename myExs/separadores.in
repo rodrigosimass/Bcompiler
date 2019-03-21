@@ -4,4 +4,6 @@ string := "hello"
 5!
 func1()
 func_2();
+nome1
+nome2
 

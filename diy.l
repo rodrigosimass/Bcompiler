@@ -3,8 +3,6 @@
 #include <string.h>
 #include <errno.h>
 #include "y.tab.h"
-#define MAXINT 2147483647
-#define MAXDBL 9223372036854775807
 void yyerror(char *s);
 int nested = 0;
 int nltosemicolon = 0;
@@ -48,24 +46,23 @@ char c[2];
 "++"            return INC;
 "--"	          return DEC;
 
-([)!]|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*"\n" nltosemicolon=1;REJECT;
+ /*when the line ends with 1: ")" or "!" | 2:identifiers | 3,4,5,6: integer literals | 7:real literals | 8:string literals*/
+([)!]|[a-zA-Z][a-zA-Z_0-9]*|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*"\n" nltosemicolon=1;REJECT;
+ /*this expression is ignored and the next time a \n is parsed it will be interpreted as a semicolon*/
 
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
-
 [a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
-
 
 [1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 
-
 [0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-
-\"			         BEGIN XSTR;yylval.s = (char*)malloc(256);
+\".*\"            free(yylval.s);yylval.s = (char*)malloc(yyleng-1);REJECT;
+\"			          BEGIN XSTR;
 <XSTR>\"          BEGIN INITIAL;return STR;
 <XSTR>\\\"        strcat(yylval.s, "\"");
 <XSTR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);

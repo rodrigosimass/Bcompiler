@@ -33,8 +33,10 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
 	    extern YYSTYPE yylval;
 	    int tk;
 	    while ((tk = yylex())) 
-		    if (tk > YYERRCODE)
+		    if (tk > YYERRCODE) {
 				printf("%d:\t%s\n", tk, yyname[tk]);
+				printf("%f\n",yylval.d);
+			}
 		    else
 			    printf("%d:\t%c\n", tk, tk);
 	    return 0;

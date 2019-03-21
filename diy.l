@@ -6,17 +6,15 @@
 #define MAXINT 2147483647
 #define MAXDBL 9223372036854775807
 void yyerror(char *s);
-int octal(char *s);
 int nested = 0;
-long l = 0;
-long double ld = 0;
 %}
-%x COM1 COM2 STR
+%x COM1 COM2 STRG
 %%
 
-<STR>\"          BEGIN INITIAL; return STR
-<STR>.|\n		 strcat(yylval.s, yytext);
-<STR>.           ;
+<STRG>\"          BEGIN INITIAL;
+<STRG>\\\"        strcat(yylval.s,yytext);
+<STRG>.           strcat(yylval.s,(char)yytext);
+<STRG>\n          strcat(yylval.s,(char)yytext);
 
 <COM1>"=<"       nested++;
 <COM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
@@ -58,18 +56,16 @@ long double ld = 0;
 
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
-
 [a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
 
+[1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
+"0"[0-7]*		errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
+"0"[0-9]*		errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
+"0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 
-[1-9][0-9]*     l = strtol(yytext   , 0, 10);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
-"0"[0-7]*		l = strtol(yytext + 1, 0, 8);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
-"0"[0-9]*		l = strtol(yytext + 1, 0, 10);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
-"0b"[01]+       l = strtol(yytext + 2, 0, 2);if(l <= MAXINT){yylval.i = l;return INT;}else yyerror("int overflow");
+[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-("0"|[1-9][0-9]*)\.[0-9]+([eE][-+]?[1-9][0-9]*)?  ld =  strtold(yytext,0);if(ld <=MAXDBL){yylval.d = ld;return DBL;}else yyerror("dbl overflow");
-
-\"			    BEGIN STR;
+\"			    BEGIN STRG;
 
 [ \n\r\t]+		;
 .			    yyerror("unknown character"); if (0) {REJECT; unput    (*yytext); input(); };

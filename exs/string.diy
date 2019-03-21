@@ -2,33 +2,33 @@ public integer strcmp(string s1, string s2)
 public string strcpy(string dest, string src) 
 public string strchr(string str, integer c)
 
-integer strcmp(string s1, string s2) {
+integer strcmp(const string s1, const string s2) {
+	integer i := 0;
 	do {
 		=<break if end of string is reached or characters differ =>
-		if *s1 = 0 then break;
-		if *s1 <> *s2 then break;
-		s1 := s1 + 1;
-		s2 := s2 + 1;
+		if s1[i] = 0 then break;
+		if s1[i] <> s2[i] then break;
+		i++;
 	}while 1;
-	strcmp := *s1 - *s2;
+	strcmp := s1[i] - s2[i];
 };
 
-integer strcpy(string dest, string src) {
-	string pointer := dest; ==save the pointer to the beggining of the destinantion string
+integer strcpy(string dest, const string src) {
+	integer i := 0;
 	do {
-		if *src = 0 then break;
-		*dest := *src
-		dest := dest + 1;
-		src := src + 1;
+		if src[i] = 0 then break;
+		dest[i] := src[i];
+		i++;
 	}while 1;
-	*dest := 0;
-	strcpy := pointer;
+	dest[i] := 0;
+	strcpy := dest;
 };
 
-string strchr(string str, integer c) {
+string strchr(const string str, integer c) {
+	integer i := 0;
 	do {
-		if *str = c then strchr := str;
-		if *str = 0 then strchr := NULL;
-		str := str + 1;
+		if str[i] = c then strchr := str;
+		if str[i] = 0 then strchr := NULL;
+		i++;
 	}while 1;
 };

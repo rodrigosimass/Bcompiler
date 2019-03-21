@@ -7,26 +7,25 @@
 #define MAXDBL 9223372036854775807
 void yyerror(char *s);
 int nested = 0;
-int i;
-char a;
+int nltosemicolon = 0;
 char c[2];
 %}
-%x COM1 COM2 STR
+%x XCOM1 XCOM2 XSTR
 %%
-"=<"            BEGIN COM1;
-<COM1>"=<"       nested++;
-<COM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
-<COM1>.|\n       ;
+"=<"             BEGIN XCOM1;
+<XCOM1>"=<"       nested++;
+<XCOM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
+<XCOM1>.|\n       ;
 
-"=="            BEGIN COM2;
-<COM2>"\n"       BEGIN INITIAL;
-<COM2>.          ;
+"=="             BEGIN XCOM2;
+<XCOM2>"\n"       BEGIN INITIAL;
+<XCOM2>.          ;
  
 "void"          return VOID;
-"integer"       return INTEGER;
-"string"        return STRING;
+"integer"       return TYPEINTEGER;
+"string"        return TYPESTRING;
 "public"        return PUBLIC;
-"number"        return NUMBER;
+"number"        return TYPENUMBER;
 "const"         return CONST;
 "if"            return IF;
 "then"          return THEN;
@@ -49,30 +48,37 @@ char c[2];
 "++"            return INC;
 "--"	          return DEC;
 
+([)!]|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*"\n" nltosemicolon=1;REJECT;
+
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
+
 [a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
+
 
 [1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 
+
 [0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-\"			         BEGIN STR;yylval.s = (char*)malloc(256);
-<STR>\"          BEGIN INITIAL;return STRG;
-<STR>\\\"        strcat(yylval.s, "\"");
-<STR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
-<STR>.|\n        strcat(yylval.s, yytext);
 
-[ \n\r\t]+		;
+\"			         BEGIN XSTR;yylval.s = (char*)malloc(256);
+<XSTR>\"          BEGIN INITIAL;return STR;
+<XSTR>\\\"        strcat(yylval.s, "\"");
+<XSTR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
+<XSTR>.|\n        strcat(yylval.s, yytext);
+
+[ \n\r\t]+		if(nltosemicolon==1){nltosemicolon = 0;return ';';}
+
 .			    yyerror("unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
 %%
 int yywrap(void) {
-  if (YYSTATE == COM1) yyerror("unterminated comment");
-  if (YYSTATE == COM2) yyerror("unterminated comment");
-  if (YYSTATE == STRG) yyerror("unterminated string");
+  if (YYSTATE == XCOM1) yyerror("unterminated comment");
+  if (YYSTATE == XCOM2) yyerror("unterminated comment");
+  if (YYSTATE == XSTR) yyerror("unterminated string");
   return 1;
 } 
 char *getyytext() { return yytext; }

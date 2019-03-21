@@ -19,8 +19,8 @@ extern int yylex();
 
 %token <i> INT
 %token <d> DBL
-%token <s> STRG NAME
-%token VOID INTEGER STRING PUBLIC NUMBER CONST IF THEN ELSE 
+%token <s> STR NAME
+%token VOID TYPEINTEGER TYPESTRING PUBLIC TYPENUMBER CONST IF THEN ELSE 
 %token WHILE DO FOR IN STEP UPTO DOWNTO BREAK CONTINUE
 %token EQ GE LE NE ASSIGN INC DEC
 %%
@@ -35,8 +35,8 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
 	    while ((tk = yylex()))
 		    if (tk > YYERRCODE) {
 				printf("%d:\t%s\n", tk, yyname[tk]);
-				if (yyname[tk]=="STRG")
-					printf("%s\n",yylval.s);
+				/*if (yyname[tk]=="NAME")
+					printf("NAME=%s\n",yylval.s);*/
 			}
 		    else
 			    printf("%d:\t%c\n", tk, tk);

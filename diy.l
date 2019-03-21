@@ -8,24 +8,16 @@
 void yyerror(char *s);
 int nested = 0;
 %}
-%x COM1 COM2 STRG
+%x COM1 COM2 STR
 %%
-
-<STRG>\"          BEGIN INITIAL;
-<STRG>\\\"        strcat(yylval.s,yytext);
-<STRG>.           strcat(yylval.s,(char)yytext);
-<STRG>\n          strcat(yylval.s,(char)yytext);
-
+"=<"            BEGIN COM1;
 <COM1>"=<"       nested++;
 <COM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
 <COM1>.|\n       ;
 
+"=="            BEGIN COM2;
 <COM2>"\n"       BEGIN INITIAL;
 <COM2>.          ;
-
-
-"=<"            BEGIN COM1;
-"=="            BEGIN COM2;
  
 "void"          return VOID;
 "integer"       return INTEGER;
@@ -65,10 +57,17 @@ int nested = 0;
 
 [0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-\"			    BEGIN STRG;
+\"			         BEGIN STR;
+<STR>\"          BEGIN INITIAL; return STRG;
+<STR>.|\n        strcat(yylval.s, yytext);
 
 [ \n\r\t]+		;
 .			    yyerror("unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
 %%
-int yywrap(void) { return 1; }
+int yywrap(void) {
+  if (YYSTATE == COM1) yyerror("unterminated comment");
+  if (YYSTATE == COM2) yyerror("unterminated comment");
+  if (YYSTATE == STRG) yyerror("unterminated string");
+  return 1;
+} 
 char *getyytext() { return yytext; }

@@ -14,14 +14,14 @@ extern int yylex();
 %union {
 	int i;		
 	double d;
-	char *s;	    
+	char* s;	    
 };
 
 %token <i> INT
 %token <d> DBL
-%token <s> STR
+%token <s> STRG NAME
 %token VOID INTEGER STRING PUBLIC NUMBER CONST IF THEN ELSE 
-%token WHILE DO FOR IN STEP UPTO DOWNTO BREAK CONTINUE NAME
+%token WHILE DO FOR IN STEP UPTO DOWNTO BREAK CONTINUE
 %token EQ GE LE NE ASSIGN INC DEC
 %%
 file	:
@@ -35,7 +35,6 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
 	    while ((tk = yylex())) 
 		    if (tk > YYERRCODE) {
 				printf("%d:\t%s\n", tk, yyname[tk]);
-				printf("%f\n",yylval.d);
 			}
 		    else
 			    printf("%d:\t%c\n", tk, tk);

@@ -32,9 +32,11 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
     int main(int argc, char *argv[]) {
 	    extern YYSTYPE yylval;
 	    int tk;
-	    while ((tk = yylex())) 
+	    while ((tk = yylex()))
 		    if (tk > YYERRCODE) {
 				printf("%d:\t%s\n", tk, yyname[tk]);
+				if (yyname[tk]=="STRG")
+					printf("%s\n",yylval.s);
 			}
 		    else
 			    printf("%d:\t%c\n", tk, tk);

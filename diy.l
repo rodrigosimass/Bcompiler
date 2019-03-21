@@ -7,6 +7,9 @@
 #define MAXDBL 9223372036854775807
 void yyerror(char *s);
 int nested = 0;
+int i;
+char a;
+char c[2];
 %}
 %x COM1 COM2 STR
 %%
@@ -39,26 +42,28 @@ int nested = 0;
 "continue"      return CONTINUE;
 
 "="	            return EQ;
-">="	        return GE;
-"<="	        return LE;
-"<>"	        return NE;
-":="	        return ASSIGN;
+">="	          return GE;
+"<="	          return LE;
+"<>"	          return NE;
+":="	          return ASSIGN;
 "++"            return INC;
-"--"	        return DEC;
+"--"	          return DEC;
 
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
 [a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
 
 [1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
-"0"[0-7]*		errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
-"0"[0-9]*		errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
+"0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
+"0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
 "0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("integer overflow");return INT;
 
 [0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-\"			         BEGIN STR;
-<STR>\"          BEGIN INITIAL; return STRG;
+\"			         BEGIN STR;yylval.s = (char*)malloc(256);
+<STR>\"          BEGIN INITIAL;return STRG;
+<STR>\\\"        strcat(yylval.s, "\"");
+<STR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
 <STR>.|\n        strcat(yylval.s, yytext);
 
 [ \n\r\t]+		;

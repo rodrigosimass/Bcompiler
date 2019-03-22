@@ -1,3 +1,4 @@
+
 %{
 #include <stdlib.h>
 #include <string.h>
@@ -6,16 +7,17 @@
 void yyerror(char *s);
 int nested = 0;
 int nltosemicolon = 0;
+int malloced = 0;
 char c[2];
 %}
 %x XCOM1 XCOM2 XSTR
 %%
-"=<"             BEGIN XCOM1;
+"=<"              BEGIN XCOM1;
 <XCOM1>"=<"       nested++;
 <XCOM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
 <XCOM1>.|\n       ;
 
-"=="             BEGIN XCOM2;
+"=="              BEGIN XCOM2;
 <XCOM2>"\n"       BEGIN INITIAL;
 <XCOM2>.          ;
  
@@ -61,14 +63,15 @@ char c[2];
 
 [0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
 
-\".*\"            free(yylval.s);yylval.s = (char*)malloc(yyleng-1);REJECT;
+\".*\"            yylval.s = (char*)malloc(yyleng-1);*yylval.s = 0;REJECT;
 \"			          BEGIN XSTR;
 <XSTR>\"          BEGIN INITIAL;return STR;
 <XSTR>\\\"        strcat(yylval.s, "\"");
 <XSTR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
 <XSTR>.|\n        strcat(yylval.s, yytext);
 
-[ \n\r\t]+		if(nltosemicolon==1){nltosemicolon = 0;return ';';}
+[ \r\t]*"\n"      if(nltosemicolon==1){nltosemicolon = 0;return ';';}
+[ \r\t]+		    ;
 
 .			    yyerror("unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
 %%

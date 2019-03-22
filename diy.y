@@ -35,8 +35,12 @@ int yyerror(char *s) { printf("%s\n",s); return 1; }
 	    while ((tk = yylex()))
 		    if (tk > YYERRCODE) {
 				printf("%d:\t%s\n", tk, yyname[tk]);
-				/*if (yyname[tk]=="NAME")
-					printf("NAME=%s\n",yylval.s);*/
+				if (yyname[tk]=="NAME" || yyname[tk]=="STR")
+					printf("%s\n",yylval.s);
+				if (yyname[tk]=="INT")
+					printf("%d\n",yylval.i);
+				if (yyname[tk]=="DBL")
+					printf("%f\n",yylval.d);
 			}
 		    else
 			    printf("%d:\t%c\n", tk, tk);

@@ -12,13 +12,13 @@ char c[2];
 %}
 %x XCOM1 XCOM2 XSTR
 %%
-"=<"              BEGIN XCOM1;
+"=<"              BEGIN XCOM1; if(nltosemicolon==1){nltosemicolon = 0;return ';';}
 <XCOM1>"=<"       nested++;
 <XCOM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
 <XCOM1>.|\n       ;
 
 "=="              BEGIN XCOM2;
-<XCOM2>"\n"       BEGIN INITIAL;
+<XCOM2>"\n"       BEGIN INITIAL; if(nltosemicolon==1){nltosemicolon = 0;return ';';}
 <XCOM2>.          ;
  
 "void"          return VOID;
@@ -49,36 +49,37 @@ char c[2];
 "--"	          return DEC;
 
  /*when the line ends with 1: ")" or "!" | 2:identifiers | 3,4,5,6: integer literals | 7:real literals | 8:string literals*/
-([)!]|[a-zA-Z][a-zA-Z_0-9]*|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*"\n" nltosemicolon=1;REJECT;
+([)!]|[a-zA-Z][a-zA-Z_0-9]*|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*("\n"|"=="|"=<") nltosemicolon=1;REJECT;
  /*this expression is ignored and the next time a \n is parsed it will be interpreted as a semicolon*/
 
 [-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
 
 [a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
 
-[1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
-"0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("integer overflow");return INT;
-"0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("integer overflow");return INT;
-"0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("integer overflow");return INT;
+[1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
+"0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
+"0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
+"0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
 
-[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("double overflow");return DBL;
+[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("ERROR:double overflow");return DBL;
 
 \".*\"            yylval.s = (char*)malloc(yyleng-1);*yylval.s = 0;REJECT;
 \"			          BEGIN XSTR;
 <XSTR>\"          BEGIN INITIAL;return STR;
 <XSTR>\\\"        strcat(yylval.s, "\"");
+<XSTR>"\n"        yyerror("ERROR:string literal can not be define in multiple lines");
 <XSTR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
 <XSTR>.|\n        strcat(yylval.s, yytext);
 
 [ \r\t]*"\n"      if(nltosemicolon==1){nltosemicolon = 0;return ';';}
 [ \r\t]+		    ;
 
-.			    yyerror("unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
+.			    yyerror("ERROR:unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
 %%
 int yywrap(void) {
-  if (YYSTATE == XCOM1) yyerror("unterminated comment");
-  if (YYSTATE == XCOM2) yyerror("unterminated comment");
-  if (YYSTATE == XSTR) yyerror("unterminated string");
+  if (YYSTATE == XCOM1) yyerror("ERROR:unterminated comment");
+  if (YYSTATE == XCOM2) yyerror("ERROR:unterminated comment");
+  if (YYSTATE == XSTR) yyerror("ERROR:unterminated string");
   return 1;
 } 
 char *getyytext() { return yytext; }

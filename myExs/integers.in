@@ -5,11 +5,13 @@
 0b100
 5
 6
-07 == octal
-08 == nao em octal mas tem de dar octal na mesma
-011 
+07== octal
+08== nao em octal mas tem de dar octal na mesma
+011 =< comentario
+lixo
+=>
 012
-013
+013 =< comentario=>
 0b1100
 0b1101
 0b1110
@@ -20,4 +22,3 @@
 019
 2147483647
 2147483648
-999999999999999999999999999999999999999

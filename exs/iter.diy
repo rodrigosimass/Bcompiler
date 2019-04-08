@@ -1,9 +1,8 @@
-public integer entry (integer argc, string *argv, string *envp)
-
+== Computacao de factoriais de forma iterativa
 public number factorial(integer n) {
-	integer res := 1;
-	integer i := 2;
-
-	for i in 2 upto n do res := res * i;
-	factorial := res;
+    factorial := 1
+    if n > 0 then
+        do
+            factorial := factorial * n
+        while --n > 1
 };

@@ -1,18 +1,25 @@
-public integer rand()
-public integer atoi(string s)
-public void printr(integer i)
+public void prints(string s)
+public void printd(number d)
 public void println()
+public integer readi()
+
+public void srand(integer s)
+public integer rand()
 
 public integer entry (integer argc, string *argv, string *envp) {
-	integer n   := atoi(argv[1]);
-	integer sum := 0;
-	integer i   := 0;
-	number res  := 0;
+  integer cnt
+  integer i
+  number sum
 
-	for i in 1 upto n do sum := sum + rand();
-	res := sum / n;
-	printr(res);
-	println()
-
-	entry := 0
+  prints("Número de valores pseudo-aleatórios a gerar: ")
+  cnt := readi()
+  i := 0
+  sum := 0
+  if cnt > 0 then
+    do
+      sum := sum + rand()
+    while ++i < cnt
+  printd(sum / cnt)
+  println()
+  entry := 0
 };

@@ -1,85 +1,92 @@
-
 %{
+/* $Id: diy.l,v 1.0 2019/02/15 11:13:32 prs Exp $ */
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include "y.tab.h"
+static int eoi; /* end of instruction */
+static int ncom; /* comment nesting level */
+static int in; /* in string */
 void yyerror(char *s);
-int nested = 0;
-int nltosemicolon = 0;
-int malloced = 0;
-char c[2];
+int octal(char *s);
 %}
-%x XCOM1 XCOM2 XSTR
+%x COM CHR
+FLT	[0-9]+\.[0-9]+([Ee][+-]?[0-9]+)?
 %%
-"=<"              BEGIN XCOM1; if(nltosemicolon==1){nltosemicolon = 0;return ';';}
-<XCOM1>"=<"       nested++;
-<XCOM1>"=>"       if(nested==0)BEGIN INITIAL;else nested--;
-<XCOM1>.|\n       ;
+"==".*                  ;
+"=<"			ncom = 1; BEGIN COM;
+<COM>.|\n		;
+<COM>\"([^"\\]|\\.)*\"	;
+<COM>"=<"		ncom++;
+<COM>"=>"		if (--ncom == 0) BEGIN 0;
 
-"=="              BEGIN XCOM2;
-<XCOM2>"\n"       BEGIN INITIAL; if(nltosemicolon==1){nltosemicolon = 0;return ';';}
-<XCOM2>.          ;
- 
-"void"          return VOID;
-"integer"       return TYPEINTEGER;
-"string"        return TYPESTRING;
-"public"        return PUBLIC;
-"number"        return TYPENUMBER;
-"const"         return CONST;
-"if"            return IF;
-"then"          return THEN;
-"else"          return ELSE;
-"while"         return WHILE;
-"do"            return DO;
-"for"           return FOR;
-"in"            return IN;
-"step"          return STEP;
-"upto"          return UPTO;
-"downto"        return DOWNTO;
-"break"         return BREAK;
-"continue"      return CONTINUE;
+">="			eoi = 0; return GE;
+"<="			eoi = 0; return LE;
+"<>"			eoi = 0; return NE;
+":="			eoi = 0; return ATR;
+"++"			eoi = 0; return INCR;
+"--"			eoi = 0; return DECR;
+"if"			eoi = 0; return IF;
+"then"			eoi = 0; return THEN;
+"else"			eoi = 0; return ELSE;
+"while"			eoi = 0; return WHILE;
+"do"			eoi = 0; return DO;
+"for"			eoi = 0; return FOR;
+"in"			eoi = 0; return IN;
+"upto"			eoi = 0; return UPTO;
+"downto"		eoi = 0; return DOWNTO;
+"step"			eoi = 0; return STEP;
+"void"			eoi = 0; return VOID;
+"integer"		eoi = 0; return INTEGER;
+"string"		eoi = 0; return STRING;
+"number"		eoi = 0; return NUMBER;
+"public"		eoi = 0; return PUBLIC;
+"const"			eoi = 0; return CONST;
+"break"			eoi = 0; return BREAK;
+"continue"		eoi = 0; return CONTINUE;
 
-"="	            return EQ;
-">="	          return GE;
-"<="	          return LE;
-"<>"	          return NE;
-":="	          return ASSIGN;
-"++"            return INC;
-"--"	          return DEC;
+[A-Za-z][A-Za-z0-9_]*	eoi = 1; yylval.s = strdup(yytext); return ID;
+\"([^"\\]|\\(.|\n))*\"	eoi = 1; yylval.s = malloc(yyleng); *yylval.s = 0; in = 1; REJECT;
+\"			if (in) BEGIN CHR; else { yyerror("unterminated string"); return 0; }
+<CHR>\"			eoi = 1; BEGIN 0; return STR;
+<CHR>\\\"		strcat(yylval.s, "\"");
+<CHR>\\n		strcat(yylval.s, "\n");
+<CHR>\\r		strcat(yylval.s, "\n");
+<CHR>\\t		strcat(yylval.s, "\n");
+<CHR>\\[0-9a-fA-F][0-9a-fA-F]?	{ char s[2]; s[1] = 0; s[0] = strtol(yytext+1,0,16); strcat(yylval.s, s); }
+<CHR>\\.		yyerror("invalid escape sequence in string");
+<CHR>[^"]		strcat(yylval.s, yytext);
+0[0-9]+			eoi = 1; yylval.i = octal(yytext); return INT;
+[0-9]+			eoi = 1; errno = 0; yylval.i = strtol(yytext, 0, 10); if (errno == ERANGE) yyerror("overflow in decimal constant"); return INT;
+0b[01]+			eoi = 1; errno = 0; yylval.i = strtol(yytext+2, 0, 2); if (errno == ERANGE) yyerror("overflow in binary constant"); return INT;
+{FLT}			eoi = 1; yylval.r = strtod(yytext, 0); return REAL;
+[-<>+*/%=|&!;#{},\[\](]	eoi = 0; return *yytext;
+[)!]			eoi = 1; return *yytext;
 
- /*when the line ends with 1: ")" or "!" | 2:identifiers | 3,4,5,6: integer literals | 7:real literals | 8:string literals*/
-([)!]|[a-zA-Z][a-zA-Z_0-9]*|[1-9][0-9]*|"0"[0-7]*|"0"[0-9]*|"0b"[01]+|[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?|\"(.)*\")[ \r\t]*("\n"|"=="|"=<") nltosemicolon=1;REJECT;
- /*this expression is ignored and the next time a \n is parsed it will be interpreted as a semicolon*/
+[ \t\r]+		; /* ignore whitespace */
+[\n]+			if (eoi == 1) { eoi = 0; return ';'; }
 
-[-+*/%!&|~^<>()?:;,\[\]{}#]	return *yytext;
-
-[a-zA-Z][a-zA-Z_0-9]*       yylval.s = strdup(yytext); return NAME;
-
-[1-9][0-9]*     errno = 0;yylval.i = strtol(yytext    , 0, 10);if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
-"0"[0-7]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 8 );if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
-"0"[0-9]*		    errno = 0;yylval.i = strtol(yytext + 1, 0, 10);if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
-"0b"[01]+       errno = 0;yylval.i = strtol(yytext + 2, 0, 2 );if (errno == ERANGE) yyerror("ERROR:integer overflow");return INT;
-
-[0-9]+\.[0-9]+([eE][-+]?[1-9][0-9]*)?  errno = 0; yylval.d =  strtod(yytext,0);if (errno == ERANGE) yyerror("ERROR:double overflow");return DBL;
-
-\".*\"            yylval.s = (char*)malloc(yyleng-1);*yylval.s = 0;REJECT;
-\"			          BEGIN XSTR;
-<XSTR>\"          BEGIN INITIAL;return STR;
-<XSTR>\\\"        strcat(yylval.s, "\"");
-<XSTR>"\n"        yyerror("ERROR:string literal can not be define in multiple lines");
-<XSTR>\\([0-9a-fA-F])*    c[0] = strtol(yytext+1,0,16); strcat(yylval.s, c);
-<XSTR>.|\n        strcat(yylval.s, yytext);
-
-[ \r\t]*"\n"      if(nltosemicolon==1){nltosemicolon = 0;return ';';}
-[ \r\t]+		    ;
-
-.			    yyerror("ERROR:unknown character"); if (0) {REJECT; unput    (*yytext); input(); };
+.			yyerror("Unknown character");
 %%
 int yywrap(void) {
-  if (YYSTATE == XCOM1) yyerror("ERROR:unterminated comment");
-  if (YYSTATE == XCOM2) yyerror("ERROR:unterminated comment");
-  if (YYSTATE == XSTR) yyerror("ERROR:unterminated string");
+  if (YYSTATE == COM) yyerror("unterminated comment");
   return 1;
-} 
+}
+
+int octal(char *s)
+{
+  int i, a = 0, b = 0;
+
+  for (i = 0; i < strlen(s); i++) {
+    if (s[i] < '0' || s[i] > '9') break;
+    b = b * 8 + s[i] - '0';
+    if (b < a) {
+      yyerror("octal overflow");
+      break;
+    }
+    a = b;
+  }
+  return a;
+}
+
 char *getyytext() { return yytext; }

@@ -109,7 +109,7 @@ instr: IF expr THEN instr
 
 expr: ID
     | lit
-    | expr ATR expr
+    | expr ATR expr {/*TODO aqui sera lval ATR expr*/}
     | expr '|' expr
     | expr '&' expr
     | '~' expr
@@ -119,26 +119,26 @@ expr: ID
     | expr LE expr
     | expr '<' expr
     | expr '>' expr
-    | expr '-' expr {/*TODO verificar que as expr sao do tipo real ou interio*/}
-    | expr '+' expr {/*TODO verificar que as expr sao do tipo real ou interio*/}
-    | expr '%' expr {/*TODO verificar que as expr sao do tipo real ou interio*/}
-    | expr '/' expr {/*TODO verificar que as expr sao do tipo real ou interio*/}
-    | expr '*' expr {/*TODO verificar que as expr sao do tipo real ou interio*/}
-    | expr DECR     {/*TODO verificar que expr e do tipo inteiro*/}
-    | expr INCR     {/*TODO verificar que expr e do tipo inteiro*/}
-    | DECR expr    {/*TODO verificar que expr e do tipo inteiro TODO sera assim?*/}
-    | INCR expr    {/*TODO verificar que expr e do tipo inteiro TODO sera assim?*/}
+    | expr '-' expr
+    | expr '+' expr
+    | expr '%' expr
+    | expr '/' expr
+    | expr '*' expr
+    | expr DECR     {/*TODO aplicar a lvalue e nao a expr*/}
+    | expr INCR     {/*TODO aplicar a lvalue e nao a expr*/}
+    | DECR expr     {/*TODO aplicar a lvalue e nao a expr*/}
+    | INCR expr     {/*TODO aplicar a lvalue e nao a expr*/}
     | "-" expr
     | expr '!'
-    | '&' expr
-    | '*' expr
+    | '&' ID        {/*TODO mudar ID para lvalue??*/}
+    | '*' ID 
     | '('expr')'
-    | ID'['expr']' {/*TODO nao sei se e assim TODO confirmar se e apontador para inteiro*/}
-    | ID'('args')' {/*TODO ver se a fhncao foi declarada e com este numero de argumentos*/}
-    | ID'(' ')'  {/*TODO nao ha casts implicitos TODO vars e consts do tipo void*/}
+    | ID'['expr']' {/*TODO sera isto um lval e nao uma expr?*/}
+    | ID'('exprs')'
+    | ID'(' ')' 
     ; 
 
-args: args ',' expr
+exprs: exprs ',' expr
     | expr
     ;
 

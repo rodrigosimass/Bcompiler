@@ -14,3 +14,46 @@
 [ ] Cada operação de pré incremento ou decremento é efetuada antes do cálculo do respetivo left-value
     Cada operação de pós incremento ou decremento é efetuada depois do cálculo do respetivo left-value. 
 [ ] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ). 
+
+expr: lval
+    | lit
+    | lval ATR expr
+    | expr '|' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
+    | expr '&' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
+    | '~' expr      {/*TODO aplicavel a inteiros apenas*/}
+    | expr '=' expr {/*TODO inteiros reais e strings*/}
+    | expr NE expr  {/*TODO inteiros reais e strings*/}
+    | expr GE expr  {/*TODO inteiros reais e strings*/}
+    | expr LE expr  {/*TODO inteiros reais e strings*/}
+    | expr '<' expr {/*TODO inteiros reais e strings*/}
+    | expr '>' expr {/*TODO inteiros reais e strings*/}
+    | expr '-' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
+    | expr '+' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
+    | expr '%' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
+    | expr '/' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
+    | expr '*' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
+    | lval DECR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
+    | lval INCR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
+    | DECR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
+    | INCR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
+    | "-" expr %prec SIMETRIC{/*TODO expr tem que ser um valor inteiro or real*/}
+    | expr '!' {/*TODO expr tem que ser um valor inteiro*/}
+    | '&' lval %prec ADDRESSOF       
+    | '*' lval %prec DEREFERENCING
+    | '('expr')'
+    | ID'('exprs')' {/*TODO ID tem que referir uma função previamente declarada ou definida. TODO verificar tipo ordem e dimensao dor args*/}
+    | ID'(' ')' {/*TODO ID tem que referir uma função previamente declarada ou definida.*/}
+    ;
+
+lval: ID
+    | ID'['expr']' {/*TODO ID deverá designar apenas uma variável ou constante do tipo ponteiro. */}
+    ;
+
+exprs: exprs ',' expr
+    | expr
+    ;
+
+lit: STR  {$$=strNode(STR,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
+   | INT  {$$=intNode(INT,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
+   | REAL {$$=realNode(REAL,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
+   ;

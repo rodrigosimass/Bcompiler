@@ -2,10 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "tabid.h"
 #include "node.h"
 extern int yylineno;
 extern int yylex();
 int yyerror(char *s);
+int errors = 0;
+Node *rootNode;
 %}
 %union {
 	int i;			/* integer value */
@@ -22,7 +25,7 @@ int yyerror(char *s);
 %left '<' '>' GE LE
 %left '+' '-'
 %left '*' '/' '%'
-%nonassoc '!' INCR DECR SIMETRIC ADDRESSOF DEREFERENCING
+%nonassoc '!' INCR DECR SIM ADDR DREF
 %nonassoc '[' '('
 
 %token <i> INT
@@ -31,133 +34,134 @@ int yyerror(char *s);
 %token DO WHILE IF THEN FOR IN UPTO DOWNTO STEP BREAK CONTINUE
 %token VOID INTEGER STRING NUMBER CONST PUBLIC ELSE
 
-%token FICH NIL DECLS DECL INIT EMPTYBODY
-%type<n> decls decl tipo init lit params body
+%token FICH NIL DECLS DECL PCDECL PDECL CDECL INIT EMPTYBODY INIT EPARAMS BPARAMS PARAM EXPR BODY INSTRS FORUP FORDW BREAK LVAL LIT INITATR INITELIPSIS
+%token POSDECR POSINCR PREDECR PREINCR PAREXPR INVOC INDEX EXPRS
+%type<n> decls decl tipo init lit eparams bparams body id param bparams instrs instr expr lval exprs
 
 %%
 
-ficheiro: decls    {printNode(binNode(FICH,$1,nilNode(NIL)),0,yynames);}
+ficheiro: decls    {rootNode= uniNode(FICH,$1);}
         ;
 
 decls: decls decl  {$$=binNode(DECLS,$1,$2);}
      | /*vazio*/   {$$=nilNode(NIL);}
      ;
 
-decl: PUBLIC CONST tipo '*' ID init ';' {$$=binNode(DECL,$3,$6);}
-    | PUBLIC CONST tipo '*' ID ';'      {$$=binNode(DECL,$3,nilNode(NIL));}
-    | PUBLIC CONST tipo ID init ';'     {$$=binNode(DECL,$3,$5);}
-    | PUBLIC CONST tipo ID ';'          {$$=binNode(DECL,$3,nilNode(NIL));}
-    | PUBLIC tipo '*' ID init ';'       {$$=binNode(DECL,$2,$5);}
-    | PUBLIC tipo '*' ID ';'            {$$=binNode(DECL,$2,nilNode(NIL));}
-    | PUBLIC tipo ID init ';'           {$$=binNode(DECL,$2,$4);}
-    | PUBLIC tipo ID ';'                {$$=binNode(DECL,$2,nilNode(NIL));}
-    | CONST tipo '*' ID init ';'        {$$=binNode(DECL,$2,$5);}
-    | CONST tipo '*' ID ';'             {$$=binNode(DECL,$2,nilNode(NIL));}
-    | CONST tipo ID init ';'            {$$=binNode(DECL,$2,$4);}
-    | CONST tipo ID ';'                 {$$=binNode(DECL,$2,nilNode(NIL));}
-    | tipo '*' ID init ';'              {$$=binNode(DECL,$1,$4);}
-    | tipo '*' ID ';'                   {$$=binNode(DECL,$1,nilNode(NIL));}
-    | tipo ID init ';'                  {$$=binNode(DECL,$1,$3);}
-    | tipo ID ';' {}                    {$$=binNode(DECL,$1,nilNode(NIL));}
+decl: PUBLIC CONST tipo '*' ID init ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),$6);}
+    | PUBLIC CONST tipo '*' ID ';'      {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),nilNode(NIL));}
+    | PUBLIC CONST tipo ID init ';'     {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),$5);}
+    | PUBLIC CONST tipo ID ';'          {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),nilNode(NIL));}
+    | PUBLIC tipo '*' ID init ';'       {$$=seqNode(PDECL,3,$2,strNode(ID,$4),$5);}
+    | PUBLIC tipo '*' ID ';'            {$$=seqNode(PDECL,3,$2,strNode(ID,$4),nilNode(NIL));}
+    | PUBLIC tipo ID init ';'           {$$=seqNode(PDECL,3,$2,strNode(ID,$3),$4);}
+    | PUBLIC tipo ID ';'                {$$=seqNode(PDECL,3,$2,strNode(ID,$3),nilNode(NIL));}
+    | CONST tipo '*' ID init ';'        {$$=seqNode(CDECL,3,$2,strNode(ID,$4),$5);}
+    | CONST tipo '*' ID ';'             {$$=seqNode(CDECL,3,$2,strNode(ID,$4),nilNode(NIL));}
+    | CONST tipo ID init ';'            {$$=seqNode(CDECL,3,$2,strNode(ID,$3),$4);}
+    | CONST tipo ID ';'                 {$$=seqNode(CDECL,3,$2,strNode(ID,$3),nilNode(NIL));}
+    | tipo '*' ID init ';'              {$$=seqNode(DECL,3,$1,strNode(ID,$3),$4);}
+    | tipo '*' ID ';'                   {$$=seqNode(DECL,3,$1,strNode(ID,$3),nilNode(NIL));}
+    | tipo ID init ';'                  {$$=seqNode(DECL,3,$1,strNode(ID,$2),$3);}
+    | tipo ID ';' {}                    {$$=seqNode(DECL,3,$1,strNode(ID,$2),nilNode(NIL));}
     ;
 
 tipo: INTEGER {$$=nilNode(INTEGER);}
     | STRING  {$$=nilNode(STRING);}
     | NUMBER  {$$=nilNode(NUMBER);}
-    | VOID {$$=nilNode(VOID);/*TODO so no caso de estar a inicializar uma funcao*/}
+    | VOID    {$$=nilNode(VOID);}
     ;
 
-init: ATR INT              {$$=intNode(INT,$2);}     
-    | ATR CONST STR        {$$=strNode(STR,$3);}
-    | ATR STR              {$$=strNode(STR,$2);}
-    | ATR REAL             {$$=realNode(REAL,$2);}
-    | ATR ID               {$$=strNode(STR,$2);}
-    | '(' params ')' body  {$$=binNode(INIT,$2,$4);}
-    | '(' params ')'       {$$=binNode(INIT,$2,nilNode(NIL));}
-    | '(' ')' body         {$$=binNode(INIT,nilNode(NIL),$3);}
-    | '(' ')'              {$$=nilNode(EMPTYBODY);}
-    | ID                   {$$=strNode(STR,$1);/*TODO caso seja um ponteiro e ambos os lados tem a mesma base*/}
+init: ATR INT              {$$=uniNode(INITATR,intNode(INT,$2));}     
+    | ATR CONST STR        {$$=uniNode(INITATR,strNode(STR,$3));} /*TODO acrescentar algo ao no que permita destinguir que e uma const*/
+    | ATR STR              {$$=uniNode(INITATR,strNode(STR,$2));}
+    | ATR REAL             {$$=uniNode(INITATR,realNode(REAL,$2));}
+    | ATR ID               {$$=uniNode(INITATR,strNode(ID,$2));} /*TODO caso seja um ponteiro e ambos os lados tem a mesma base*/
+    | '(' eparams ')' body {$$=binNode(INITELIPSIS,$2,$4);}
+    | '(' eparams ')'      {$$=binNode(INITELIPSIS,$2,nilNode(NIL));}
+    | '(' ')' body         {$$=binNode(INITELIPSIS,nilNode(NIL),$3);}
+    | '(' ')'              {$$=binNode(INITELIPSIS,nilNode(NIL),nilNode(NIL));}
     ;
 
-params: params ',' param
-      | param
+eparams: eparams ',' param {$$=binNode(EPARAMS,$1,$3);}
+      | param            {$$=uniNode(PARAM,$1);}
       ;
 
-param: tipo '*' ID
-     | tipo ID
+param: tipo '*' ID {$$=binNode(PARAM,$1,strNode(ID,$3));}
+     | tipo ID     {$$=binNode(PARAM,$1,strNode(ID,$2));}
      ;
 
-body: '{'bParams instrs'}';
+body: '{'bparams instrs'}' {$$=binNode(BODY,$2,$3);}
+    ; 
 
-bParams: bParams param ';'
-       | /*vazio*/
+bparams: bparams param ';' {$$=binNode(BPARAMS,$1,$2);}
+       | /*vazio*/         {$$=nilNode(NIL);}
        ;
 
-instrs: instrs instr
-      |
+instrs: instrs instr {$$=binNode(INSTRS,$1,$2);}
+      |              {$$=nilNode(NIL);}
       ;
 
-instr: IF expr THEN instr
-     | IF expr THEN instr ELSE instr
-     | DO instr WHILE expr ';'
-     | FOR lval IN expr UPTO expr STEP expr DO instr 
-     | FOR lval IN expr UPTO expr DO instr 
-     | FOR lval IN expr DOWNTO expr STEP expr DO instr 
-     | FOR lval IN expr DOWNTO expr DO instr 
-     | expr';'
-     | body
-     | BREAK INT ';'
-     | BREAK ';'
-     | CONTINUE INT ';'
-     | CONTINUE ';'
-     | lval '#' expr ';' 
+instr: IF expr THEN instr                              {$$=seqNode(IF,3,$2,$4,nilNode(NIL));}
+     | IF expr THEN instr ELSE instr                   {$$=seqNode(IF,3,$2,$4,$6);}
+     | DO instr WHILE expr ';'                         {$$=binNode(DO,$2,$4);}
+     | FOR lval IN expr UPTO expr STEP expr DO instr   {$$=seqNode(FORUP,5,$2,$4,$6,$8,$10);}
+     | FOR lval IN expr UPTO expr DO instr             {$$=seqNode(FORUP,5,$2,$4,$6,nilNode(NIL),$8);}
+     | FOR lval IN expr DOWNTO expr STEP expr DO instr {$$=seqNode(FORDW,5,$2,$4,$6,$8,$10);}
+     | FOR lval IN expr DOWNTO expr DO instr           {$$=seqNode(FORDW,5,$2,$4,$6,nilNode(NIL),$8);}
+     | expr';'           {$$=uniNode(EXPR,$1);}
+     | body              {$$=uniNode(BODY,$1);}
+     | BREAK INT ';'     {$$=uniNode(BREAK,intNode(INT,$2));}
+     | BREAK ';'         {$$=uniNode(BREAK,nilNode(NIL));}
+     | CONTINUE INT ';'  {$$=uniNode(CONTINUE,intNode(INT,$2));}
+     | CONTINUE ';'      {$$=uniNode(CONTINUE,nilNode(NIL));}
+     | lval '#' expr ';' {$$=binNode('#',$1,$3);}
      ;
 
-expr: lval
-    | lit
-    | lval ATR expr
-    | expr '|' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
-    | expr '&' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
-    | '~' expr      {/*TODO aplicavel a inteiros apenas*/}
-    | expr '=' expr {/*TODO inteiros reais e strings*/}
-    | expr NE expr  {/*TODO inteiros reais e strings*/}
-    | expr GE expr  {/*TODO inteiros reais e strings*/}
-    | expr LE expr  {/*TODO inteiros reais e strings*/}
-    | expr '<' expr {/*TODO inteiros reais e strings*/}
-    | expr '>' expr {/*TODO inteiros reais e strings*/}
-    | expr '-' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '+' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '%' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '/' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '*' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | lval DECR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | lval INCR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | DECR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | INCR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | "-" expr %prec SIMETRIC{/*TODO expr tem que ser um valor inteiro or real*/}
-    | expr '!' {/*TODO expr tem que ser um valor inteiro*/}
-    | '&' lval %prec ADDRESSOF       
-    | '*' lval %prec DEREFERENCING
-    | '('expr')'
-    | ID'('exprs')' {/*TODO ID tem que referir uma função previamente declarada ou definida. TODO verificar tipo ordem e dimensao dor args*/}
-    | ID'(' ')' {/*TODO ID tem que referir uma função previamente declarada ou definida.*/}
+expr: lval          {$$=uniNode(LVAL,$1); if($$->attrib==PAREXPR)yyerror("Expression inside parentesis can't be a left value");}
+    | lit           {$$=uniNode(LIT,$1);}
+    | lval ATR expr {$$=binNode(ATR,$1,$3);}
+    | expr '|' expr {$$=binNode('|',$1,$3);}
+    | expr '&' expr {$$=binNode('&',$1,$3);}
+    | '~' expr      {$$=uniNode('~',$2);}
+    | expr '=' expr {$$=binNode('=',$1,$3);}
+    | expr NE expr  {$$=binNode(NE,$1,$3);}
+    | expr GE expr  {$$=binNode(GE,$1,$3);}
+    | expr LE expr  {$$=binNode(LE,$1,$3);}
+    | expr '<' expr {$$=binNode('<',$1,$3);}
+    | expr '>' expr {$$=binNode('>',$1,$3);}
+    | expr '-' expr {$$=binNode('-',$1,$3);}
+    | expr '+' expr {$$=binNode('+',$1,$3);}
+    | expr '%' expr {$$=binNode('%',$1,$3);}
+    | expr '/' expr {$$=binNode('/',$1,$3);}
+    | expr '*' expr {$$=binNode('*',$1,$3);}
+    | lval DECR     {$$=uniNode(POSDECR,$1);}  
+    | lval INCR     {$$=uniNode(POSINCR,$1);}  
+    | DECR lval     {$$=uniNode(PREDECR,$2);}  
+    | INCR lval     {$$=uniNode(PREINCR,$2);}  
+    | "-" expr %prec SIM  {$$=uniNode(SIM,$2);}
+    | expr '!'            {$$=uniNode('!',$1);}
+    | '&' lval %prec ADDR {$$=uniNode(ADDR,$2);}     
+    | '*' lval %prec DREF {$$=uniNode(DREF,$2);} 
+    | '('expr')'          {$$=uniNode(PAREXPR,$2);}
+    | ID'('exprs')'       {$$=binNode(INVOC,strNode(ID,$1),$3);} 
+    | ID'(' ')'           {$$=binNode(INVOC,strNode(ID,$1),nilNode(NIL));} 
     ;
 
-lval: ID
-    | ID'['expr']' {/*TODO ID deverá designar apenas uma variável ou constante do tipo ponteiro. */}
+lval: ID           {$$=strNode(ID,$1);}
+    | ID'['expr']' {$$=binNode(INDEX,strNode(ID,$1),$3);}
     ;
 
-exprs: exprs ',' expr
-    | expr
+exprs: exprs ',' expr {$$=binNode(EXPRS,$1,$3);}
+    | expr            {$$=uniNode(EXPR,$1);}
     ;
 
-lit: STR  {$$=strNode(STR,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
-   | INT  {$$=intNode(INT,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
-   | REAL {$$=realNode(REAL,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
+lit: STR  {$$=strNode(STR,$1);}
+   | INT  {$$=intNode(INT,$1);}
+   | REAL {$$=realNode(REAL,$1);}
    ;
  
 %%
-int yyerror(char *s) { fprintf(stderr, "ERROR in line %d: %s\n", yylineno, s); return 0; }
+int yyerror(char *s) {errors++; fprintf(stderr, "ERROR in line %d: %s\n", yylineno, s); return 0; }
 char *dupstr(const char*s) { return strdup(s); }
 
 char **yynames =
@@ -177,6 +181,11 @@ int main(int argc, char *argv[]) {
   else
    printf("%d:\t%c\n", tk, tk);
  return 0; */
- yyparse();
+ if (yyparse() != 0 || errors > 0) {
+    fprintf(stderr, "%d errors\n", errors);
+    return 1;
+  }
+  printNode(rootNode,stdout,yynames);
+  return 0;
 }
 

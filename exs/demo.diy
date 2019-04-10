@@ -1,0 +1,4 @@
+public integer entry (integer argc, string *argv, string *envp) {
+    integer a;
+    (a) := 2;  
+};

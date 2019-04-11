@@ -48,21 +48,21 @@ decls: decls decl  {$$=binNode(DECLS,$1,$2);}
      | /*vazio*/   {$$=nilNode(NIL);}
      ;
 
-decl: PUBLIC CONST tipo '*' ID init ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),$6);IDnew(15+$3->info+$6->info,$5,(long int)$6->user);print_list($6->user);}
+decl: PUBLIC CONST tipo '*' ID init ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),$6);IDnew(15+$3->info+$6->info,$5,(long int)$6->user);/* print_list($6->user); */}
     | PUBLIC CONST tipo '*' ID ';'      {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),nilNode(NIL));IDnew(15+$3->info,$5,0);}
-    | PUBLIC CONST tipo ID init ';'     {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),$5);IDnew(5+$3->info+$5->info,$4,(long int)$5->user);print_list($5->user);}
+    | PUBLIC CONST tipo ID init ';'     {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),$5);IDnew(5+$3->info+$5->info,$4,(long int)$5->user);/* print_list($5->user); */}
     | PUBLIC CONST tipo ID ';'          {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),nilNode(NIL));IDnew(5+$3->info,$4,0);}
-    | PUBLIC tipo '*' ID init ';'       {$$=seqNode(PDECL,3,$2,strNode(ID,$4),$5);IDnew(10+$2->info+$5->info,$4,(long int)$5->user);print_list($5->user);}
+    | PUBLIC tipo '*' ID init ';'       {$$=seqNode(PDECL,3,$2,strNode(ID,$4),$5);IDnew(10+$2->info+$5->info,$4,(long int)$5->user);/* print_list($5->user); */}
     | PUBLIC tipo '*' ID ';'            {$$=seqNode(PDECL,3,$2,strNode(ID,$4),nilNode(NIL));IDnew(10+$2->info,$4,0);}
-    | PUBLIC tipo ID init ';'           {$$=seqNode(PDECL,3,$2,strNode(ID,$3),$4);IDnew($2->info+$4->info,$3,(long int)$4->user);print_list($4->user);}
+    | PUBLIC tipo ID init ';'           {$$=seqNode(PDECL,3,$2,strNode(ID,$3),$4);IDnew($2->info+$4->info,$3,(long int)$4->user);/* print_list($4->user); */}
     | PUBLIC tipo ID ';'                {$$=seqNode(PDECL,3,$2,strNode(ID,$3),nilNode(NIL));IDnew($2->info,$3,0);}
-    | CONST tipo '*' ID init ';'        {$$=seqNode(CDECL,3,$2,strNode(ID,$4),$5);IDnew(15+$2->info+$5->info,$4,(long int)$5->user);print_list($5->user);}
+    | CONST tipo '*' ID init ';'        {$$=seqNode(CDECL,3,$2,strNode(ID,$4),$5);IDnew(15+$2->info+$5->info,$4,(long int)$5->user);/* print_list($5->user); */}
     | CONST tipo '*' ID ';'             {yyerror("Non-public constants must be initialized\n");}
-    | CONST tipo ID init ';'            {$$=seqNode(CDECL,3,$2,strNode(ID,$3),$4);IDnew(5+$2->info+$4->info,$3,(long int)$4->user);print_list($4->user);}
+    | CONST tipo ID init ';'            {$$=seqNode(CDECL,3,$2,strNode(ID,$3),$4);IDnew(5+$2->info+$4->info,$3,(long int)$4->user);/* print_list($4->user); */}
     | CONST tipo ID ';'                 {yyerror("Non-public constants must be initialized\n");}
-    | tipo '*' ID init ';'              {$$=seqNode(DECL,3,$1,strNode(ID,$3),$4);IDnew(10+$1->info+$4->info,$3,(long int)$4->user);print_list($4->user);}
+    | tipo '*' ID init ';'              {$$=seqNode(DECL,3,$1,strNode(ID,$3),$4);IDnew(10+$1->info+$4->info,$3,(long int)$4->user);/* print_list($4->user); */}
     | tipo '*' ID ';'                   {$$=seqNode(DECL,3,$1,strNode(ID,$3),nilNode(NIL));IDnew(10+$1->info,$3,0);}
-    | tipo ID init ';'                  {$$=seqNode(DECL,3,$1,strNode(ID,$2),$3);IDnew($1->info+$3->info,$2,(long int)$3->user);print_list($3->user);}
+    | tipo ID init ';'                  {$$=seqNode(DECL,3,$1,strNode(ID,$2),$3);IDnew($1->info+$3->info,$2,(long int)$3->user);/* print_list($3->user); */}
     | tipo ID ';'                       {$$=seqNode(DECL,3,$1,strNode(ID,$2),nilNode(NIL));IDnew($1->info,$2,0);}
     ;
 
@@ -77,7 +77,7 @@ init: ATR INT              {$$=uniNode(INITATR,intNode(INT,$2));$$->info=0;$$->u
     | ATR STR              {$$=uniNode(INITATR,strNode(STR,$2));$$->info=0;$$->user=0;}
     | ATR REAL             {$$=uniNode(INITATR,realNode(REAL,$2));$$->info=0;$$->user=0;}
     | ATR ID               {$$=uniNode(INITATR,strNode(ID,$2));$$->info=0;$$->user=0;} /*TODO caso seja um ponteiro e ambos os lados tem a mesma base*/
-    | '(' eparams ')' body {$$=binNode(INITELIPSIS,$2,$4);$$->info=20;$$->user=$2->user;}
+    | '(' eparams ')' body {$$=binNode(INITELIPSIS,$2,$4);$$->info=20;$$->user=$2->user;if(haveElementsInCommon($2->user, $4->user))yyerror("Local variable already declared.");}
     | '(' eparams ')'      {$$=binNode(INITELIPSIS,$2,nilNode(NIL));$$->info=20;$$->user=$2->user;}
     | '(' ')' body         {$$=binNode(INITELIPSIS,nilNode(NIL),$3);$$->info=20;$$->user=0;}
     | '(' ')'              {$$=binNode(INITELIPSIS,nilNode(NIL),nilNode(NIL));$$->info=20;$$->user=0;}
@@ -91,11 +91,12 @@ param: tipo '*' ID {$$=binNode(PARAM,$1,strNode(ID,$3));$$->info=$1->info;}
      | tipo ID     {$$=binNode(PARAM,$1,strNode(ID,$2));$$->info=$1->info;}
      ;
 
-body: '{'bparams instrs'}' {$$=binNode(BODY,$2,$3);}
+body: '{'bparams instrs'}' {$$=binNode(BODY,$2,$3);$$->user=$2->user;}
     ; 
 
-bparams: bparams param ';' {$$=binNode(BPARAMS,$1,$2);}
-       | /*vazio*/         {$$=nilNode(NIL);}
+bparams: bparams  param ';' {$$=binNode(BPARAMS,$1,$2);$1->user=add($1->user,$2->info,$2->value.sub.n[1]->value.s);$$->user=$1->user;}
+       | param ';'          {$$=uniNode(PARAM,$1);$$->user=add($$->user,$1->info,$1->value.sub.n[1]->value.s);}
+       | /*vazio*/          {$$=nilNode(NIL);}
        ;
 
 instrs: instrs instr {$$=binNode(INSTRS,$1,$2);}

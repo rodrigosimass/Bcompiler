@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<string.h>
 #include "list.h"
 
 void init(NODE** head) {
@@ -23,4 +24,15 @@ NODE* add(NODE* node, int t, char* n) {
     temp->next = node;
     node = temp;
     return node;
+}
+
+int haveElementsInCommon(NODE* fpars, NODE* bpars) {
+    NODE * temp;
+    NODE * temp2;
+    for (temp = bpars; temp; temp = temp->next) {
+         for (temp2 = fpars; temp2; temp2 = temp2->next)
+            if(strcmp(temp->name,temp2->name)==0 && temp->type==temp2->type)
+                return 1;
+    }
+    return 0;
 }

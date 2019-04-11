@@ -1,1 +1,3 @@
-public void prints(string s);
+integer func(integer a, integer b, string s, number x);
+integer func2(integer a, integer b);
+integer func3(integer a);

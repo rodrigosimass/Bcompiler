@@ -1,5 +1,5 @@
 [X] Verificar se ao declarar uma var global, ela é unica ou nao.
-[ ] Uma função não pode declarar no seu corpo principal identificadores com mesmo nome dos seus argumentos formais. 
+[X] Uma função não pode declarar no seu corpo principal identificadores com mesmo nome dos seus argumentos formais. 
 [ ] Verifica que identificadores que foram declarados como constantes nao possam ser utilizado em operações que modifiquem o seu valor.
 [X] Os identificadores declarados constantes que não sejam public têm de ser iniciados.
 [ ] Nem os argumentos formais nem nenhum dos blocos da função pode declarar variáveis com o nome da própria função. 
@@ -13,47 +13,48 @@
 [ ] Ao indexar (str[x]) O identificador deverá designar apenas uma variável ou constante do tipo ponteiro. 
 [ ] Cada operação de pré incremento ou decremento é efetuada antes do cálculo do respetivo left-value
     Cada operação de pós incremento ou decremento é efetuada depois do cálculo do respetivo left-value. 
-[ ] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ). 
+[ ] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ).
 
-expr: lval
-    | lit
-    | lval ATR expr
-    | expr '|' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
-    | expr '&' expr {/*TODO aplicavel a inteiros apenas TODO nao avaliar segundo argumento de nao for necessario*/}
-    | '~' expr      {/*TODO aplicavel a inteiros apenas*/}
-    | expr '=' expr {/*TODO inteiros reais e strings*/}
-    | expr NE expr  {/*TODO inteiros reais e strings*/}
-    | expr GE expr  {/*TODO inteiros reais e strings*/}
-    | expr LE expr  {/*TODO inteiros reais e strings*/}
-    | expr '<' expr {/*TODO inteiros reais e strings*/}
-    | expr '>' expr {/*TODO inteiros reais e strings*/}
-    | expr '-' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '+' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '%' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '/' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | expr '*' expr {/*TODO expr tem que ser um valor inteiro or real TODO resultado e promovido a real caso haja apenas 1 real*/}
-    | lval DECR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | lval INCR   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | DECR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | INCR lval   {/*TODO lvlal tem que ser do tipo inteiro*/}  
-    | "-" expr %prec SIMETRIC{/*TODO expr tem que ser um valor inteiro or real*/}
-    | expr '!' {/*TODO expr tem que ser um valor inteiro*/}
-    | '&' lval %prec ADDRESSOF       
-    | '*' lval %prec DEREFERENCING
-    | '('expr')'
-    | ID'('exprs')' {/*TODO ID tem que referir uma função previamente declarada ou definida. TODO verificar tipo ordem e dimensao dor args*/}
-    | ID'(' ')' {/*TODO ID tem que referir uma função previamente declarada ou definida.*/}
-    ;
+-----------VARS------------
 
-lval: ID
-    | ID'['expr']' {/*TODO ID deverá designar apenas uma variável ou constante do tipo ponteiro. */}
-    ;
+1 integer
+2 string
+3 number
+4 void
 
-exprs: exprs ',' expr
-    | expr
-    ;
+6 const integer
+7 const string
+8 const number
+9 const void
 
-lit: STR  {$$=strNode(STR,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
-   | INT  {$$=intNode(INT,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
-   | REAL {$$=realNode(REAL,$1);/*TODO verificar se podem ter o mesmo nome STR*/}
-   ;
+11 integer *
+12 string *
+13 number *
+14 void *
+
+16 const integer *
+17 const string *
+18 const number *
+19 const void *
+
+--------FUNCS--------------
+
+21 integer
+22 string
+23 number
+24 void
+
+26 const integer
+27 const string
+28 const number
+29 const void
+
+31 integer *
+32 string *
+33 number *
+34 void *
+
+36 const integer *
+37 const string *
+38 const number *
+39 const void *

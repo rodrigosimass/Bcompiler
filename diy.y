@@ -9,6 +9,11 @@ extern int yylineno;
 extern int yylex();
 int yyerror(char *s);
 int errors = 0;
+int t;
+int inLoop = 0;
+char * errorMsg1 = "Invalid type(s) of operand(s)";
+char * errorMsg2 = "Break instruction must be inside a loop";
+char * errorMsg3 = "Continue instruction must be inside a loop";
 int verifyTypes(int operation, int operand1, int operand2);
 Node *rootNode;
 %}
@@ -49,21 +54,21 @@ decls: decls decl  {$$=binNode(DECLS,$1,$2);}
      | /*vazio*/   {$$=nilNode(NIL);}
      ;
 
-decl: PUBLIC CONST tipo '*' ID {IDnew($3->info,$5,0);IDpush();}init{IDpop();} ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),$7);IDreplace(15+$3->info+$7->info,$5,(long int)$7->user);/* print_list($7->user); */}
+decl: PUBLIC CONST tipo '*' ID {IDpush();IDnew(15+$3->info,$5,0);}init{IDpop();} ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),$7);IDnew(15+$3->info+$7->info,$5,(long int)$7->user);/* print_list($7->user); */}
     | PUBLIC CONST tipo '*' ID ';'      {$$=seqNode(PCDECL,3,$3,strNode(ID,$5),nilNode(NIL));IDnew(15+$3->info,$5,0);}
-    | PUBLIC CONST tipo ID {IDnew($3->info,$4,0);IDpush();}init{IDpop();} ';'     {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),$6);IDreplace(5+$3->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
+    | PUBLIC CONST tipo ID {IDpush();IDnew($3->info,$4,0);}init{IDpop();} ';' {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),$6);IDnew(5+$3->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
     | PUBLIC CONST tipo ID ';'          {$$=seqNode(PCDECL,3,$3,strNode(ID,$4),nilNode(NIL));IDnew(5+$3->info,$4,0);}
-    | PUBLIC tipo '*' ID {IDnew($2->info,$4,0);IDpush();}init{IDpop();} ';'       {$$=seqNode(PDECL,3,$2,strNode(ID,$4),$6);IDreplace(10+$2->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
+    | PUBLIC tipo '*' ID {IDpush();IDnew(10+$2->info,$4,0);}init{IDpop();} ';' {$$=seqNode(PDECL,3,$2,strNode(ID,$4),$6);IDnew(10+$2->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
     | PUBLIC tipo '*' ID ';'            {$$=seqNode(PDECL,3,$2,strNode(ID,$4),nilNode(NIL));IDnew(10+$2->info,$4,0);}
-    | PUBLIC tipo ID {IDnew($2->info,$3,0);IDpush();}init{IDpop();} ';'           {$$=seqNode(PDECL,3,$2,strNode(ID,$3),$5);IDreplace($2->info+$5->info,$3,(long int)$5->user);/* print_list($5->user); */}
+    | PUBLIC tipo ID {IDpush();IDnew($2->info,$3,0);}init{IDpop();} ';' {$$=seqNode(PDECL,3,$2,strNode(ID,$3),$5);IDnew($2->info+$5->info,$3,(long int)$5->user);/* print_list($5->user); */}
     | PUBLIC tipo ID ';'                {$$=seqNode(PDECL,3,$2,strNode(ID,$3),nilNode(NIL));IDnew($2->info,$3,0);}
-    | CONST tipo '*' ID {IDnew($2->info,$4,0);IDpush();}init{IDpop();} ';'        {$$=seqNode(CDECL,3,$2,strNode(ID,$4),$6);IDreplace(15+$2->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
+    | CONST tipo '*' ID {IDpush();IDnew(10+$2->info,$4,0);}init{IDpop();} ';'  {$$=seqNode(CDECL,3,$2,strNode(ID,$4),$6);IDnew(15+$2->info+$6->info,$4,(long int)$6->user);/* print_list($6->user); */}
     | CONST tipo '*' ID ';'             {yyerror("Non-public constants must be initialized\n");}
-    | CONST tipo ID {IDnew($2->info,$3,0);IDpush();}init{IDpop();} ';'            {$$=seqNode(CDECL,3,$2,strNode(ID,$3),$5);IDreplace(5+$2->info+$5->info,$3,(long int)$5->user);/* print_list($5->user); */}
+    | CONST tipo ID {IDpush();IDnew($2->info,$3,0);}init{IDpop();} ';' {$$=seqNode(CDECL,3,$2,strNode(ID,$3),$5);IDnew(5+$2->info+$5->info,$3,(long int)$5->user);printf("criou:%s\n",$3);/* print_list($5->user); */}
     | CONST tipo ID ';'                 {yyerror("Non-public constants must be initialized\n");}
-    | tipo '*' ID {IDnew($1->info,$3,0);IDpush();} init {IDpop();} ';' {$$=seqNode(DECL,3,$1,strNode(ID,$3),$5);IDreplace(10+$1->info+$5->info,$3,(long int)$5->user);/* print_list($5->user); */}
+    | tipo '*' ID {IDpush();IDnew(10+$1->info,$3,0);} init {IDpop();} ';' {$$=seqNode(DECL,3,$1,strNode(ID,$3),$5);IDnew(10+$1->info+$5->info,$3,(long int)$5->user);/* print_list($5->user); */}
     | tipo '*' ID ';'                   {$$=seqNode(DECL,3,$1,strNode(ID,$3),nilNode(NIL));IDnew(10+$1->info,$3,0);}
-    | tipo ID {IDnew($1->info,$2,0);IDpush();}init{IDpop();} ';' {$$=seqNode(DECL,3,$1,strNode(ID,$2),$4);IDreplace($1->info+$4->info,$2,(long int)$4->user);/* print_list($4->user); */}
+    | tipo ID {IDpush();IDnew($1->info,$2,0);}init{IDpop();} ';' {$$=seqNode(DECL,3,$1,strNode(ID,$2),$4);IDnew($1->info+$4->info,$2,(long int)$4->user);/* print_list($4->user); */}
     | tipo ID ';'                       {$$=seqNode(DECL,3,$1,strNode(ID,$2),nilNode(NIL));IDnew($1->info,$2,0);}
     ;
 
@@ -108,45 +113,45 @@ instrs: instrs instr {$$=binNode(INSTRS,$1,$2);}
 
 instr: IF expr THEN instr                              {$$=seqNode(IF,3,$2,$4,nilNode(NIL));}
      | IF expr THEN instr ELSE instr                   {$$=seqNode(IF,3,$2,$4,$6);}
-     | DO instr WHILE expr ';'                         {$$=binNode(DO,$2,$4);}
-     | FOR lval IN expr UPTO expr STEP expr DO instr   {$$=seqNode(FORUP,5,$2,$4,$6,$8,$10);}
-     | FOR lval IN expr UPTO expr DO instr             {$$=seqNode(FORUP,5,$2,$4,$6,nilNode(NIL),$8);}
-     | FOR lval IN expr DOWNTO expr STEP expr DO instr {$$=seqNode(FORDW,5,$2,$4,$6,$8,$10);}
-     | FOR lval IN expr DOWNTO expr DO instr           {$$=seqNode(FORDW,5,$2,$4,$6,nilNode(NIL),$8);}
+     | DO {inLoop++;} instr WHILE expr ';'                         {$$=binNode(DO,$2,$5);inLoop--;}
+     | FOR lval IN expr UPTO expr STEP expr DO {inLoop++;}instr    {$$=seqNode(FORUP,5,$2,$4,$6,$8,$11);inLoop--;}
+     | FOR lval IN expr UPTO expr DO {inLoop++;} instr             {$$=seqNode(FORUP,5,$2,$4,$6,nilNode(NIL),$9);inLoop--;}
+     | FOR lval IN expr DOWNTO expr STEP expr DO {inLoop++;} instr {$$=seqNode(FORDW,5,$2,$4,$6,$8,$11);inLoop--;}
+     | FOR lval IN expr DOWNTO expr DO {inLoop++;} instr           {$$=seqNode(FORDW,5,$2,$4,$6,nilNode(NIL),$9);inLoop--;}
      | expr';'           {$$=uniNode(EXPR,$1);}
      | body              {$$=uniNode(BODY,$1);}
-     | BREAK INT ';'     {$$=uniNode(BREAK,intNode(INT,$2));}
-     | BREAK ';'         {$$=uniNode(BREAK,nilNode(NIL));}
-     | CONTINUE INT ';'  {$$=uniNode(CONTINUE,intNode(INT,$2));}
-     | CONTINUE ';'      {$$=uniNode(CONTINUE,nilNode(NIL));}
+     | BREAK INT ';'     {if(inLoop)$$=uniNode(BREAK,intNode(INT,$2));else yyerror(errorMsg2);}
+     | BREAK ';'         {if(inLoop)$$=uniNode(BREAK,nilNode(NIL));else yyerror(errorMsg2);}
+     | CONTINUE INT ';'  {if(inLoop)$$=uniNode(CONTINUE,intNode(INT,$2));else yyerror(errorMsg3);}
+     | CONTINUE ';'      {if(inLoop)$$=uniNode(CONTINUE,nilNode(NIL));else yyerror(errorMsg3);}
      | lval '#' expr ';' {$$=binNode('#',$1,$3);}
      ;
 
 expr: lval          {$$=uniNode(LVAL,$1);$$->info=$1->info;}
     | lit           {$$=uniNode(LIT,$1);$$->info=$1->info;}
-    | lval ATR expr {$$=binNode(ATR,$1,$3);int i=verifyTypes(ATR,$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '|' expr {$$=binNode('|',$1,$3); int i=verifyTypes('|',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '&' expr {$$=binNode('&',$1,$3); int i=verifyTypes('&',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | '~' expr      {$$=uniNode('~',$2); int i=verifyTypes('~',$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '=' expr {$$=binNode('=',$1,$3);int i=verifyTypes('=',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr NE expr  {$$=binNode(NE,$1,$3);int i=verifyTypes(NE,$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr GE expr  {$$=binNode(GE,$1,$3);int i=verifyTypes(GE,$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr LE expr  {$$=binNode(LE,$1,$3);int i=verifyTypes(LE,$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '<' expr {$$=binNode('<',$1,$3);int i=verifyTypes('<',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '>' expr {$$=binNode('>',$1,$3);int i=verifyTypes('>',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '-' expr {$$=binNode('-',$1,$3);int i=verifyTypes('-',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '+' expr {$$=binNode('+',$1,$3);int i=verifyTypes('+',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '%' expr {$$=binNode('%',$1,$3);int i=verifyTypes('%',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '/' expr {$$=binNode('/',$1,$3);int i=verifyTypes('/',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '*' expr {$$=binNode('*',$1,$3);int i=verifyTypes('*',$1->info,$3->info); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | lval DECR     {$$=uniNode(POSDECR,$1);int i=verifyTypes(POSDECR,$1->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}  
-    | lval INCR     {$$=uniNode(POSINCR,$1);int i=verifyTypes(POSINCR,$1->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}  
-    | DECR lval     {$$=uniNode(PREDECR,$2);int i=verifyTypes(PREDECR,$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}  
-    | INCR lval     {$$=uniNode(PREINCR,$2);int i=verifyTypes(PREINCR,$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}  
-    | "-" expr %prec SIM  {$$=uniNode(SIM,$2);int i=verifyTypes(SIM,$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | expr '!'            {$$=uniNode('!',$1);int i=verifyTypes('!',$1->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}
-    | '&' lval %prec ADDR {$$=uniNode(ADDR,$2);int i=verifyTypes(ADDR,$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");}     
-    | '*' lval %prec DREF {$$=uniNode(DREF,$2);int i=verifyTypes(DREF,$2->info,1); if(i)$$->info=i;else yyerror("Invalid type of operands.");} 
+    | lval ATR expr {$$=binNode(ATR,$1,$3);    t=verifyTypes(ATR,$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '|' expr {$$=binNode('|',$1,$3);    t=verifyTypes('|',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '&' expr {$$=binNode('&',$1,$3);    t=verifyTypes('&',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | '~' expr      {$$=uniNode('~',$2);       t=verifyTypes('~',$2->info,1);        if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '=' expr {$$=binNode('=',$1,$3);    t=verifyTypes('=',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr NE expr  {$$=binNode(NE,$1,$3);     t=verifyTypes(NE,$1->info,$3->info);  if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr GE expr  {$$=binNode(GE,$1,$3);     t=verifyTypes(GE,$1->info,$3->info);  if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr LE expr  {$$=binNode(LE,$1,$3);     t=verifyTypes(LE,$1->info,$3->info);  if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '<' expr {$$=binNode('<',$1,$3);    t=verifyTypes('<',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '>' expr {$$=binNode('>',$1,$3);    t=verifyTypes('>',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '-' expr {$$=binNode('-',$1,$3);    t=verifyTypes('-',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '+' expr {$$=binNode('+',$1,$3);    t=verifyTypes('+',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '%' expr {$$=binNode('%',$1,$3);    t=verifyTypes('%',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '/' expr {$$=binNode('/',$1,$3);    t=verifyTypes('/',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '*' expr {$$=binNode('*',$1,$3);    t=verifyTypes('*',$1->info,$3->info); if(t)$$->info=t;else yyerror(errorMsg1);}
+    | lval DECR     {$$=uniNode(POSDECR,$1);   t=verifyTypes(POSDECR,$1->info,1);    if(t)$$->info=t;else yyerror(errorMsg1);}  
+    | lval INCR     {$$=uniNode(POSINCR,$1);   t=verifyTypes(POSINCR,$1->info,1);    if(t)$$->info=t;else yyerror(errorMsg1);}  
+    | DECR lval     {$$=uniNode(PREDECR,$2);   t=verifyTypes(PREDECR,$2->info,1);    if(t)$$->info=t;else yyerror(errorMsg1);}  
+    | INCR lval     {$$=uniNode(PREINCR,$2);   t=verifyTypes(PREINCR,$2->info,1);    if(t)$$->info=t;else yyerror(errorMsg1);}  
+    | "-" expr %prec SIM  {$$=uniNode(SIM,$2); t=verifyTypes(SIM,$2->info,1);        if(t)$$->info=t;else yyerror(errorMsg1);}
+    | expr '!'            {$$=uniNode('!',$1); t=verifyTypes('!',$1->info,1);        if(t)$$->info=t;else yyerror(errorMsg1);}
+    | '&' lval %prec ADDR {$$=uniNode(ADDR,$2);t=verifyTypes(ADDR,$2->info,1);       if(t)$$->info=t;else yyerror(errorMsg1);}     
+    | '*' lval %prec DREF {$$=uniNode(DREF,$2);t=verifyTypes(DREF,$2->info,1);       if(t)$$->info=t;else yyerror(errorMsg1);} 
     | '('expr')'          {$$=uniNode(PAREXPR,$2);$$->info=$2->info;}
     | ID'('exprs')'       {$$=binNode(INVOC,strNode(ID,$1),$3);$$->info = IDfind($1,0);} /*TODO verificar ordem e tipo de argumentos*/ 
     | ID'(' ')'           {$$=binNode(INVOC,strNode(ID,$1),nilNode(NIL));$$->info = IDfind($1,0);} /*TODO verificar ordem e tipo de argumentos*/
@@ -177,7 +182,7 @@ char **yynames =
 #endif
 
 int verifyTypes(int operation, int o1, int o2) {
-    printf("operation:%d o1=%d, o2=%d\n",operation, o1,o2);
+    printf("%s: o1=%d, o2=%d\n",yynames[operation], o1,o2);
     if(o1>20)
         o1 = o1-20;
     if (o2>20)
@@ -189,7 +194,8 @@ int verifyTypes(int operation, int o1, int o2) {
     if (operation == ATR) {
         /*TODO impedir funcoes e constantes*/
         /*TODO verificar tipos*/
-        return o1;
+        if (o1%10<5) /*NON CONSTANTS*/
+            return o1;
     }
     if (operation == INDEX || operation == DREF) {
         if (o2 == 1 || o2 == 6) {
@@ -246,4 +252,3 @@ int main(int argc, char *argv[]) {
   printNode(rootNode,stdout,yynames);
   return 0;
 }
-

@@ -13,7 +13,7 @@
 [ ] Ao indexar (str[x]) O identificador deverá designar apenas uma variável ou constante do tipo ponteiro. 
 [ ] Cada operação de pré incremento ou decremento é efetuada antes do cálculo do respetivo left-value
     Cada operação de pós incremento ou decremento é efetuada depois do cálculo do respetivo left-value. 
-[ ] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ).
+[X] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ).
 
 -----------VARS------------
 

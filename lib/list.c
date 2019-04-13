@@ -35,3 +35,21 @@ int haveElementsInCommon(NODE* fpars, NODE* bpars) {
     }
     return 0;
 }
+
+int compareLists(NODE *l1, NODE *l2) {
+    NODE * temp = l1; 
+    NODE * temp2 = l2;
+    printf("comparing:\n");
+    print_list(temp);
+    print_list(temp2);
+    for (; temp; temp = temp->next,temp2 = temp2->next) {
+        if(!temp2)
+            return 1;
+        if (temp->type!=temp2->type)
+            return 1;
+    }
+    if (temp2!=0)
+        return 1;
+    
+    return 0;
+}

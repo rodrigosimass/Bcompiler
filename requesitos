@@ -2,17 +2,14 @@
 [X] Uma função não pode declarar no seu corpo principal identificadores com mesmo nome dos seus argumentos formais. 
 [ ] Verifica que identificadores que foram declarados como constantes nao possam ser utilizado em operações que modifiquem o seu valor.
 [X] Os identificadores declarados constantes que não sejam public têm de ser iniciados.
-[ ] Nem os argumentos formais nem nenhum dos blocos da função pode declarar variáveis com o nome da própria função. 
-[ ] A função só pode ser invocada através de um identificador que refira uma função previamente declarada ou definida. 
-[ ] O tipo e número de parâmetros atuais deve ser igual ao tipo e número de parâmetros formais.
-[ ] Continue deverá ser a última instrução do bloco em que se insere.
-[ ] Continue só pode existir dentro de um ciclo. 
-[ ] Break iniciada pela palavra reservada break, a existir deverá ser a última instrução do bloco em que se insere.
-[ ] Break só pode existir dentro de um ciclo.
-[ ] Quando Break é executada, os conjuntos else associados aos ciclos terminados não são executados. 
-[ ] Ao indexar (str[x]) O identificador deverá designar apenas uma variável ou constante do tipo ponteiro. 
-[ ] Cada operação de pré incremento ou decremento é efetuada antes do cálculo do respetivo left-value
-    Cada operação de pós incremento ou decremento é efetuada depois do cálculo do respetivo left-value. 
+[X] Nem os argumentos formais nem nenhum dos blocos da função pode declarar variáveis com o nome da própria função. 
+[X] A função só pode ser invocada através de um identificador que refira uma função previamente declarada ou definida. 
+[X] O tipo e número de parâmetros atuais deve ser igual ao tipo e número de parâmetros formais.
+[X] Continue deverá ser a última instrução do bloco em que se insere.
+[X] Continue só pode existir dentro de um ciclo. 
+[X] Break iniciada pela palavra reservada break, a existir deverá ser a última instrução do bloco em que se insere.
+[X] Break só pode existir dentro de um ciclo.
+[X] Ao indexar (str[x]) O identificador deverá designar apenas uma variável ou constante do tipo ponteiro.  
 [X] Uma expressão entre parênteses não pode ser utilizada como left-value ( ver em indexação ).
 
 -----------VARS------------
@@ -58,3 +55,9 @@
 37 const string *
 38 const number *
 39 const void *
+
+ATR legais:
+string := integer
+string := *integer   em string.diy: string := &(string[i]) <=> string := &(integer) <=> string := *integer
+pointer := integer
+number := integer

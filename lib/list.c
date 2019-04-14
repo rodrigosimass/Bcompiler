@@ -39,9 +39,9 @@ int haveElementsInCommon(NODE* fpars, NODE* bpars) {
 int compareLists(NODE *l1, NODE *l2) {
     NODE * temp = l1; 
     NODE * temp2 = l2;
-    printf("comparing:\n");
+    /* printf("INVOC:\n");
     print_list(temp);
-    print_list(temp2);
+    print_list(temp2); */
     for (; temp; temp = temp->next,temp2 = temp2->next) {
         if(!temp2)
             return 1;

@@ -1,6 +1,6 @@
 [X] Verificar se ao declarar uma var global, ela é unica ou nao.
 [X] Uma função não pode declarar no seu corpo principal identificadores com mesmo nome dos seus argumentos formais. 
-[ ] Verifica que identificadores que foram declarados como constantes nao possam ser utilizado em operações que modifiquem o seu valor.
+[X] Verifica que identificadores que foram declarados como constantes nao possam ser utilizado em operações que modifiquem o seu valor. (:=, decrs e incrs)
 [X] Os identificadores declarados constantes que não sejam public têm de ser iniciados.
 [X] Nem os argumentos formais nem nenhum dos blocos da função pode declarar variáveis com o nome da própria função. 
 [X] A função só pode ser invocada através de um identificador que refira uma função previamente declarada ou definida. 

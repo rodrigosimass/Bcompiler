@@ -10,6 +10,8 @@
 extern int yylex();
 void yyerror(char *s);
 void declare(int pub, int cnst, Node *type, char *name, Node *value);
+void function(int pub, Node *type, char *name, Node *body);
+extern int yyselect(Node *);
 void enter(int pub, int typ, char *name);
 int checkargs(char *name, Node *args);
 int nostring(Node *arg1, Node *arg2);
@@ -47,11 +49,11 @@ static char *fpar;
 
 %type <n> tipo init finit blocop params
 %type <n> bloco decls param base stmt step args list end brk lv expr
-%type <i> ptr intp public
+%type <i> intp public
 
 %token LOCAL POSINC POSDEC PTR CALL START PARAM NIL
 %%
-file	:
+file:
 	| file error ';'
 	| file public tipo ID ';'	{ IDnew($3->value.i, $4, 0); declare($2, 0, $3, $4, 0); }
 	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 0); declare($2, 1, $4, $5, 0); }
@@ -61,20 +63,19 @@ file	:
 	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6); }
 	;
 
-public	:               { $$ = 0; }
+public:               { $$ = 0; }
 	| PUBLIC        { $$ = 1; }
 	;
 
-ptr	:               { $$ = 0; }
-	| '*'           { $$ = 10; }
+tipo: INTEGER	{ $$ = intNode(INTEGER, 1); }
+	| STRING	  { $$ = intNode(STRING, 2); }
+	| NUMBER	  { $$ = intNode(NUMBER, 3); }
+	| INTEGER '*'	{ $$ = intNode(INTEGER, 11); }
+	| STRING '*'	{ $$ = intNode(STRING, 12); }
+	| NUMBER '*'	{ $$ = intNode(NUMBER, 13); }
 	;
 
-tipo	: INTEGER ptr	{ $$ = intNode(INTEGER, 1+$2); }
-	| STRING ptr	{ $$ = intNode(STRING, 2+$2); }
-	| NUMBER ptr	{ $$ = intNode(NUMBER, 3+$2); }
-	;
-
-init	: ATR ID ';'		{ $$ = strNode(ID, $2); $$->info = IDfind($2, 0) + 10; }
+init: ATR ID ';'		{ $$ = strNode(ID, $2); $$->info = IDfind($2, 0) + 10; }
 	| ATR INT ';'		{ $$ = intNode(INT, $2); $$->info = 1; }
 	| ATR '-' INT ';'	{ $$ = intNode(INT, -$3); $$->info = 1; }
 	| ATR STR ';'		{ $$ = strNode(STR, $2); $$->info = 2; }
@@ -83,36 +84,36 @@ init	: ATR ID ';'		{ $$ = strNode(ID, $2); $$->info = IDfind($2, 0) + 10; }
 	| ATR '-' REAL ';'	{ $$ = realNode(REAL, -$3); $$->info = 3; }
         ;
 
-finit   : '(' params ')' blocop { $$ = binNode('(', $4, $2); }
-	| '(' ')' blocop        { $$ = binNode('(', $3, 0); }
+finit: '(' params ')' blocop { $$ = binNode('(', $4, $2); }
+	| '(' ')' blocop        { $$ = binNode('(', $3, nilNode(NIL)); }
 	;
 
-blocop  : ';'   { $$ = 0; }
+blocop: ';'   { $$ = nilNode(NIL); }
         | bloco ';'   { $$ = $1; }
         ;
 
-params	: param
+params: param
 	| params ',' param      { $$ = binNode(',', $1, $3); }
 	;
 
-bloco	: '{' { IDpush(); } decls list end '}'    { $$ = binNode('{', $5 ? binNode(';', $4, $5) : $4, $3); IDpop(); }
+bloco: '{' { IDpush(); } decls list end '}'    { $$ = binNode('{', $5 ? binNode(';', $4, $5) : $4, $3); IDpop(); }
 	;
 
-decls	:                       { $$ = 0; }
+decls:                       { $$ = nilNode(NIL); }
 	| decls param ';'       { $$ = binNode(';', $1, $2); }
 	;
 
-param	: tipo ID               { $$ = binNode(PARAM, $1, strNode(ID, $2));
+param: tipo ID               { $$ = binNode(PARAM, $1, strNode(ID, $2));
                                   IDnew($1->value.i, $2, 0);
                                   if (IDlevel() == 1) fpar[++fpar[0]] = $1->value.i;
                                 }
 	;
 
-stmt	: base
+stmt: base
 	| brk
 	;
 
-base	: ';'                   { $$ = nilNode(VOID); }
+base: ';'                   { $$ = nilNode(VOID); }
 	| DO { ncicl++; } stmt WHILE expr ';' { $$ = binNode(WHILE, binNode(DO, nilNode(START), $3), $5); ncicl--; }
 	| FOR lv IN expr UPTO expr step DO { ncicl++; } stmt       { $$ = binNode(';', binNode(ATR, $4, $2), binNode(FOR, binNode(IN, nilNode(START), binNode(LE, uniNode(PTR, $2), $6)), binNode(';', $10, binNode(ATR, binNode('+', uniNode(PTR, $2), $7), $2)))); ncicl--; }
 	| FOR lv IN expr DOWNTO expr step DO { ncicl++; } stmt       { $$ = binNode(';', binNode(ATR, $4, $2), binNode(FOR, binNode(IN, nilNode(START), binNode(GE, uniNode(PTR, $2), $6)), binNode(';', $10, binNode(ATR, binNode('-', uniNode(PTR, $2), $7), $2)))); ncicl--; }
@@ -124,30 +125,30 @@ base	: ';'                   { $$ = nilNode(VOID); }
 	| error ';'       { $$ = nilNode(NIL); }
 	;
 
-end	:		{ $$ = 0; }
+end:		{ $$ = nilNode(NIL); }
 	| brk;
 
 brk : BREAK intp ';'        { $$ = intNode(BREAK, $2); if ($2 <= 0 || $2 > ncicl) yyerror("invalid break argument"); }
 	| CONTINUE intp ';'     { $$ = intNode(CONTINUE, $2); if ($2 <= 0 || $2 > ncicl) yyerror("invalid continue argument"); }
 	;
 
-step	:               { $$ = intNode(INT, 1); }
+step:               { $$ = intNode(INT, 1); }
 	| STEP expr     { $$ = $2; }
 	;
 
-intp	:       { $$ = 1; }
+intp:       { $$ = 1; }
 	| INT
 	;
 
-list	: base
+list: base
 	| list base     { $$ = binNode(';', $1, $2); }
 	;
 
-args	: expr		{ $$ = binNode(',', nilNode(NIL), $1); }
+args: expr		{ $$ = binNode(',', nilNode(NIL), $1); }
 	| args ',' expr { $$ = binNode(',', $1, $3); }
 	;
 
-lv	: ID		{ long pos; int typ = IDfind($1, &pos);
+lv: ID		{ long pos; int typ = IDfind($1, &pos);
                           if (pos == 0) $$ = strNode(ID, $1);
                           else $$ = intNode(LOCAL, pos);
 			  $$->info = typ;
@@ -165,7 +166,7 @@ lv	: ID		{ long pos; int typ = IDfind($1, &pos);
 			  }
 	;
 
-expr	: lv		{ $$ = uniNode(PTR, $1); $$->info = $1->info; }
+expr: lv		{ $$ = uniNode(PTR, $1); $$->info = $1->info; }
 	| '*' lv        { $$ = uniNode(PTR, uniNode(PTR, $2)); if ($2->info % 5 == 2) $$->info = 1; else if ($2->info / 10 == 1) $$->info = $2->info % 10; else yyerror("can dereference lvalue"); }
 	| lv ATR expr   { $$ = binNode(ATR, $3, $1); if ($$->info % 10 > 5) yyerror("constant value to assignment"); if (noassign($1, $3)) yyerror("illegal assignment"); $$->info = $1->info; }
 	| INT           { $$ = intNode(INT, $1); $$->info = 1; }
@@ -306,4 +307,6 @@ void function(int pub, Node *type, char *name, Node *body)
 		if (fwd > 40) yyerror("duplicate function");
 		else IDreplace(fwd+40, name, par);
 	}
+	printNode(body,stdout,yynames);
+	yyselect(body);
 }

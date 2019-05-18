@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
     unlink(outfile);
     return 1;
   }
+  //printf("outfp is file %s\n",  outfile);
   fclose(outfp);
   return 0;
 }

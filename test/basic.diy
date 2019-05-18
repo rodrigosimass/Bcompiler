@@ -1,0 +1,52 @@
+public void printi(integer i)
+public void println()
+
+public integer f5(integer a, integer b, integer c, number d) {
+	f5 := 5;
+};
+
+public integer entry (integer argc, string *argv, string *envp) {
+	integer i;
+	integer j;
+	integer k;
+
+	number a;
+	number b;
+
+	i := 3;
+	printi(i);
+	println();
+	j := 5;
+	printi(j);
+	println();
+
+	k := i + j;
+	printi(k);
+	println();
+	printi(i := k);
+	println();
+	printi(i + 4);
+	println();
+	printi(i * 2);
+	println();
+	i := j := k;
+	printi(i);
+	println();
+	printi(j);
+	println();
+	k++;
+	printi(k);
+	println();
+	printi(k++);
+	println();
+	printi(++k);
+	k := 19.7 + 3.4;
+
+	println();
+	printi(k);
+	println();
+	k := f5(1, 2, 3, 4.0);
+	printi(k);
+	println();
+	entry := 0;
+};

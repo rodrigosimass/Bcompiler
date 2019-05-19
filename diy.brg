@@ -7,6 +7,18 @@
 #include "tabid.h"
 #include "postfix.h"
 extern FILE *outfp;
+int lbl;
+char *mklbl(int n) {
+  static char buf[20];
+  sprintf(buf, "_i%d", n);
+  return strcpy(malloc(strlen(buf)+1),buf);
+}
+
+static void outstr(char *s) {
+  while (*s) fprintf(outfp, pfCHAR, (unsigned char)*s++);
+  fprintf(outfp, pfCHAR, 0);
+}
+
 %}
 
 %include "y.tab.h"
@@ -16,13 +28,12 @@ extern FILE *outfp;
 %%
 
 finit: FINIT(blocop,params)	1 {}
-finit: FINIT(blocop,NIL) 1 {}
+finit: FINIT(blocop,NIL) 1 {fprintf(outfp,"TEXT ");}
 
 blocop: NIL 1 {}
 blocop: bloco 1 {}
 
 bloco: BLOCO(DECL(list,end),decls) 1 {}
-bloco: BLOCO(list,decls) 1 {}
 
 list: base 1 {}
 list: DECL(list,base) 1 {}
@@ -31,7 +42,13 @@ base: VOID 1 {}
 base: expr 1 {}
 base: bloco 1 {}
 
-expr: CALL(ID,args) 1 {fprintf(outfp,"pfCALL \n %s\n",LEFT_CHILD(p)->value.s);}
+lv: ID 1 {}
+
+expr: CALL(ID,args) 1 {fprintf(outfp,"pfCALL \n%s\n",LEFT_CHILD(p)->value.s);}
+expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
+expr: INT 1 {}
+expr: ATR(expr,lv) 1 {}
+
 
 args: PARAMS(NIL,expr) 1 {}
 args: PARAMS(args,expr) 1 {}

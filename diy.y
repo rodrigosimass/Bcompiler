@@ -96,7 +96,7 @@ params: param
 	| params ',' param      { $$ = binNode(',', $1, $3); }
 	;
 
-bloco: '{' { IDpush(); } decls list end '}'    { $$ = binNode('{', $5 ? binNode(';', $4, $5) : $4, $3); IDpop(); }
+bloco: '{' { IDpush(); } decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop(); }
 	;
 
 decls:                       { $$ = nilNode(NIL); }
@@ -195,7 +195,7 @@ expr: lv		{ $$ = uniNode(PTR, $1); $$->info = $1->info; }
 	| expr '|' expr { $$ = binNode('|', $1, $3); $$->info = intonly($1, 0); intonly($3, 0); }
 	| '(' expr ')' { $$ = $2; $$->info = $2->info; }
 	| ID '(' args ')' { $$ = binNode(CALL, strNode(ID, $1), $3);
-                            $$->info = checkargs($1, $3); }
+                            $$->info = checkargs($1, $3);}
 	| ID '(' ')'    { $$ = binNode(CALL, strNode(ID, $1), nilNode(VOID));
                           $$->info = checkargs($1, 0); }
 	;

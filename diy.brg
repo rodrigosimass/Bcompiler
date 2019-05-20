@@ -50,7 +50,7 @@ void externs()
 %%
 
 finit: FINIT(blocop,params)	1 {}
-finit: FINIT(blocop,NIL) 1 {fprintf(outfp,"TEXT ");}
+finit: FINIT(blocop,NIL) 1 {}
 
 blocop: NIL 1 { /*extrns[extcnt++] = dupstr(mkfunc(p->value.s));*/ }
 blocop: bloco 1 {}
@@ -67,10 +67,12 @@ base: bloco 1 {}
 lv: ID 1 {}
 lv: LOCAL 1 { fprintf(outfp, pfLOCAL, p->value.i * (pfWORD/4));}   
 
-expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), (int)(pfWORD*(RIGHT_CHILD(p)->place))); }
+expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), -1*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
+expr: CALL(ID,VOID) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), 0*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
 expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
 expr: INT 1 { fprintf(outfp, pfIMM, p->value.i); }
 expr: ATR(expr,lv) 1 { fprintf(outfp, pfSTORE); }
+expr: PTR(lv) 1 { fprintf(outfp, pfLOAD);}
 
 
 args: PARAMS(NIL,expr) 1 {}

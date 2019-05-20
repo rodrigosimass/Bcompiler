@@ -64,8 +64,8 @@ file:
 	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, 0); }
 	| file public tipo ID init	{ IDnew($3->value.i, $4, 1); declare($2, 0, $3, $4, $5); }
 	| file public CONST tipo ID init	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, $6); }
-	| file public tipo ID { enter($2, $3->value.i, $4); } finit { function($2, $3, $4, $6,pos); }
-	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6,pos); }
+	| file public tipo ID { enter($2, $3->value.i, $4); } finit { function($2, $3, $4, $6,pos); pos=0;}
+	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6,pos); pos=0;}
 	;
 
 public:               { $$ = 0; }
@@ -89,7 +89,7 @@ init: ATR ID ';'		{ $$ = strNode(ID, $2); $$->info = IDfind($2, 0) + 10; }
 	| ATR '-' REAL ';'	{ $$ = realNode(REAL, -$3); $$->info = 3; }
         ;
 
-finit: '(' params ')' blocop { $$ = binNode('(', $4, $2); pos = 0;}
+finit: '(' params ')' blocop { $$ = binNode('(', $4, $2);}
 	| '(' ')' blocop        { $$ = binNode('(', $3, nilNode(NIL)); }
 	;
 
@@ -98,7 +98,7 @@ blocop: ';'   { $$ = nilNode(NIL);}
         ;
 
 params: param             
-	| params ',' param      { $$ = binNode(',', $1, $3);}
+	| params ',' param      { $$ = binNode(',', $1, $3); pos+=4;}
 	;
 
 bloco: '{' { IDpush(); pos = -8;} decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop();}
@@ -173,7 +173,7 @@ lv: ID		{ long pos; int typ = IDfind($1, &pos);
 			  }
 	;
 
-expr: lv		{ $$ = uniNode(PTR, $1); $$->info = $1->info; }
+expr: lv		      { $$ = uniNode(PTR, $1); $$->info = $1->info; }
 	| '*' lv        { $$ = uniNode(PTR, uniNode(PTR, $2)); if ($2->info % 5 == 2) $$->info = 1; else if ($2->info / 10 == 1) $$->info = $2->info % 10; else yyerror("can dereference lvalue"); }
 	| lv ATR expr   { $$ = binNode(ATR, $3, $1); if ($$->info % 10 > 5) yyerror("constant value to assignment"); if (noassign($1, $3)) yyerror("illegal assignment"); $$->info = $1->info; }
 	| INT           { $$ = intNode(INT, $1); $$->info = 1; }
@@ -321,13 +321,15 @@ void function(int pub, Node *type, char *name, Node *body,int posi)
 		if (fwd > 40) yyerror("duplicate function");
 		else IDreplace(fwd+40, name, par);
 		printNode(body,stdout,yynames);
-		fprintf(outfp, pfTEXT pfALIGN pfGLOBL pfLABEL pfENTER, mkfunc(name), pfFUNC, mkfunc(name), posi * (pfWORD/4));
+		fprintf(outfp, pfTEXT pfALIGN pfGLOBL pfLABEL pfENTER, mkfunc(name), pfFUNC, mkfunc(name), posi * -1 * (pfWORD/4));
 		yyselect(body);
-		fprintf(outfp, pfLEAVE pfRET);
+		fprintf(outfp, pfLOCAL, -4);
+		fprintf(outfp, pfLOAD);
+
+		fprintf(outfp, pfPOP pfLEAVE pfRET);
 	} else {
 		printNode(body,stdout,yynames);
 		yyselect(body);
 		fprintf(outfp, pfEXTRN, mkfunc(name));
-
 	}
 }

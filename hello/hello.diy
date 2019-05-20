@@ -1,0 +1,12 @@
+public void printi(integer i)
+public void println()
+public integer f1() {
+  f1 := 69
+};
+public integer entry (integer argc, string *argv, string *envp) {
+  integer i
+  i := f1()
+  printi(i)
+  println()
+  entry := 0
+};

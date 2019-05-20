@@ -6,11 +6,13 @@
 #include <string.h>
 #include "node.h"
 #include "tabid.h"
+#include "postfix.h"
+#include "y.tab.h"
 
 extern int yylex();
 void yyerror(char *s);
 void declare(int pub, int cnst, Node *type, char *name, Node *value);
-void function(int pub, Node *type, char *name, Node *body);
+void function(int pub, Node *type, char *name, Node *body, int posi);
 extern int yyselect(Node *);
 void enter(int pub, int typ, char *name);
 int checkargs(char *name, Node *args);
@@ -19,6 +21,9 @@ int intonly(Node *arg, int);
 int noassign(Node *arg1, Node *arg2);
 static int ncicl;
 static char *fpar;
+extern FILE *outfp;
+static char *mkfunc(char *s);
+int pos;
 %}
 
 %union {
@@ -55,12 +60,12 @@ static char *fpar;
 %%
 file:
 	| file error ';'
-	| file public tipo ID ';'	{ IDnew($3->value.i, $4, 0); declare($2, 0, $3, $4, 0); }
-	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 0); declare($2, 1, $4, $5, 0); }
-	| file public tipo ID init	{ IDnew($3->value.i, $4, 0); declare($2, 0, $3, $4, $5); }
-	| file public CONST tipo ID init	{ IDnew($4->value.i+5, $5, 0); declare($2, 1, $4, $5, $6); }
-	| file public tipo ID { enter($2, $3->value.i, $4); } finit { function($2, $3, $4, $6); }
-	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6); }
+	| file public tipo ID ';'	{ IDnew($3->value.i, $4, 1); declare($2, 0, $3, $4, 0); }
+	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, 0); }
+	| file public tipo ID init	{ IDnew($3->value.i, $4, 1); declare($2, 0, $3, $4, $5); }
+	| file public CONST tipo ID init	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, $6); }
+	| file public tipo ID { enter($2, $3->value.i, $4); } finit { function($2, $3, $4, $6,pos); }
+	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6,pos); }
 	;
 
 public:               { $$ = 0; }
@@ -84,27 +89,28 @@ init: ATR ID ';'		{ $$ = strNode(ID, $2); $$->info = IDfind($2, 0) + 10; }
 	| ATR '-' REAL ';'	{ $$ = realNode(REAL, -$3); $$->info = 3; }
         ;
 
-finit: '(' params ')' blocop { $$ = binNode('(', $4, $2); }
+finit: '(' params ')' blocop { $$ = binNode('(', $4, $2); pos = 0;}
 	| '(' ')' blocop        { $$ = binNode('(', $3, nilNode(NIL)); }
 	;
 
-blocop: ';'   { $$ = nilNode(NIL); }
+blocop: ';'   { $$ = nilNode(NIL);}
         | bloco ';'   { $$ = $1; }
         ;
 
-params: param
-	| params ',' param      { $$ = binNode(',', $1, $3); }
+params: param             
+	| params ',' param      { $$ = binNode(',', $1, $3);}
 	;
 
-bloco: '{' { IDpush(); } decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop(); }
+bloco: '{' { IDpush(); pos = -8;} decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop();}
 	;
 
 decls:                       { $$ = nilNode(NIL); }
-	| decls param ';'       { $$ = binNode(';', $1, $2); }
+	| decls param ';'       { $$ = binNode(';', $1, $2); pos -= 4;}
 	;
 
 param: tipo ID               { $$ = binNode(PARAM, $1, strNode(ID, $2));
-                                  IDnew($1->value.i, $2, 0);
+                                  IDnew($1->value.i, $2, pos);
+																	printf("......................... param: %s tipo: %d pos: %d\n", $2, $1->value.i, pos);
                                   if (IDlevel() == 1) fpar[++fpar[0]] = $1->value.i;
                                 }
 	;
@@ -149,7 +155,8 @@ args: expr		{ $$ = binNode(',', nilNode(NIL), $1); }
 	;
 
 lv: ID		{ long pos; int typ = IDfind($1, &pos);
-                          if (pos == 0) $$ = strNode(ID, $1);
+													printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
+                          if (pos == 1) $$ = strNode(ID, $1);
                           else $$ = intNode(LOCAL, pos);
 			  $$->info = typ;
 			}
@@ -227,7 +234,7 @@ void enter(int pub, int typ, char *name) {
 	if (IDfind(name, (long*)IDtest) < 20)
 		IDnew(typ+20, name, (long)fpar);
 	IDpush();
-	if (typ != 4) IDnew(typ, name, 0);
+	if (typ != 4) IDnew(typ, name, -4);
 }
 
 int checkargs(char *name, Node *args) {
@@ -297,16 +304,30 @@ int noassign(Node *arg1, Node *arg2) {
 	return 1;
 }
 
-void function(int pub, Node *type, char *name, Node *body)
+static char *mkfunc(char *s) {
+  static char buf[80];
+  strcpy(buf, "_");
+  strcat(buf, s);
+  return buf;
+}
+
+void function(int pub, Node *type, char *name, Node *body,int posi)
 {
 	Node *bloco = LEFT_CHILD(body);
 	IDpop();
-	if (bloco != 0) { /* not a forward declaration */
+	if (bloco->type != 0) { /* not a forward declaration */
 		long par;
 		int fwd = IDfind(name, &par);
 		if (fwd > 40) yyerror("duplicate function");
 		else IDreplace(fwd+40, name, par);
+		printNode(body,stdout,yynames);
+		fprintf(outfp, pfTEXT pfALIGN pfGLOBL pfLABEL pfENTER, mkfunc(name), pfFUNC, mkfunc(name), posi * (pfWORD/4));
+		yyselect(body);
+		fprintf(outfp, pfLEAVE pfRET);
+	} else {
+		printNode(body,stdout,yynames);
+		yyselect(body);
+		fprintf(outfp, pfEXTRN, mkfunc(name));
+
 	}
-	printNode(body,stdout,yynames);
-	yyselect(body);
 }

@@ -6,8 +6,15 @@
 #include "node.h"
 #include "tabid.h"
 #include "postfix.h"
+
 extern FILE *outfp;
+
 int lbl;
+
+static char *extrns[100]; /* emit externs at the end only */
+static int extcnt;
+char *dupstr(const char *s);
+
 char *mklbl(int n) {
   static char buf[20];
   sprintf(buf, "_i%d", n);
@@ -19,6 +26,21 @@ static void outstr(char *s) {
   fprintf(outfp, pfCHAR, 0);
 }
 
+static char *mkfunc(char *s) {
+  static char buf[80];
+  strcpy(buf, "_");
+  strcat(buf, s);
+  return buf;
+}
+
+void externs()
+{
+  int i;
+  
+  for (i = 0; i < extcnt; i++)
+    if (extrns[i])
+      fprintf(outfp, pfEXTRN, extrns[i]);
+}
 %}
 
 %include "y.tab.h"
@@ -30,7 +52,7 @@ static void outstr(char *s) {
 finit: FINIT(blocop,params)	1 {}
 finit: FINIT(blocop,NIL) 1 {fprintf(outfp,"TEXT ");}
 
-blocop: NIL 1 {}
+blocop: NIL 1 { /*extrns[extcnt++] = dupstr(mkfunc(p->value.s));*/ }
 blocop: bloco 1 {}
 
 bloco: BLOCO(DECL(list,end),decls) 1 {}
@@ -43,11 +65,12 @@ base: expr 1 {}
 base: bloco 1 {}
 
 lv: ID 1 {}
+lv: LOCAL 1 { fprintf(outfp, pfLOCAL, p->value.i * (pfWORD/4));}   
 
-expr: CALL(ID,args) 1 {fprintf(outfp,"pfCALL \n%s\n",LEFT_CHILD(p)->value.s);}
+expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), (int)(pfWORD*(RIGHT_CHILD(p)->place))); }
 expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
-expr: INT 1 {}
-expr: ATR(expr,lv) 1 {}
+expr: INT 1 { fprintf(outfp, pfIMM, p->value.i); }
+expr: ATR(expr,lv) 1 { fprintf(outfp, pfSTORE); }
 
 
 args: PARAMS(NIL,expr) 1 {}

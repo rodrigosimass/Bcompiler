@@ -110,7 +110,7 @@ decls:                       { $$ = nilNode(NIL); }
 
 param: tipo ID               { $$ = binNode(PARAM, $1, strNode(ID, $2));
                                   IDnew($1->value.i, $2, pos);
-																	printf("......................... param: %s tipo: %d pos: %d\n", $2, $1->value.i, pos);
+																	printf("LOCAL:(%d)%s tipo: %d\n", pos,$2, $1->value.i);
                                   if (IDlevel() == 1) fpar[++fpar[0]] = $1->value.i;
                                 }
 	;
@@ -155,7 +155,7 @@ args: expr		{ $$ = binNode(',', nilNode(NIL), $1); }
 	;
 
 lv: ID		{ long pos; int typ = IDfind($1, &pos);
-													printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
+													//printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
                           if (pos == 1) $$ = strNode(ID, $1);
                           else $$ = intNode(LOCAL, pos);
 			  $$->info = typ;
@@ -229,6 +229,7 @@ void declare(int pub, int cnst, Node *type, char *name, Node *value)
     yyerror("wrong types in initialization");
 }
 void enter(int pub, int typ, char *name) {
+	printf("\n[FUNCAO]:%s---------------------------------------------------\n",name);
 	fpar = malloc(32); /* 31 arguments, at most */
 	fpar[0] = 0; /* argument count */
 	if (IDfind(name, (long*)IDtest) < 20)

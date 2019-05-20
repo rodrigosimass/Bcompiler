@@ -45,7 +45,7 @@ void externs()
 
 %include "y.tab.h"
 %term FINIT='(' BLOCO='{' DECL=';' PARAMS=',' RESERVA='#' INDEX='[' FACTORIAL='!'
-%term SOMA='+' SUB='-' MUL='*' DIV='/' MOD='%' LT='<' GT='>' EQ='=' AND='&' OR='|'
+%term ADD='+' SUB='-' MUL='*' DIV='/' MOD='%' LT='<' GT='>' EQ='=' AND='&' OR='|'
 
 %%
 
@@ -67,12 +67,35 @@ base: bloco 1 {}
 lv: ID 1 {}
 lv: LOCAL 1 { fprintf(outfp, pfLOCAL, p->value.i * (pfWORD/4));}   
 
+expr: PTR(lv) 1 { fprintf(outfp, pfLOAD);}
+expr: PTR(PTR(lv)) 1 {/*TODO*/}
+expr: ATR(expr,lv) 1 { fprintf(outfp, pfSTORE); }
+expr: INT 1 { fprintf(outfp, pfIMM, p->value.i); }
+expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
+expr: REAL 1 {}
+expr: UMINUS(expr)  1 { fprintf(outfp, pfNEG); }
+expr: NOT(expr)  1 { fprintf(outfp, pfIMM pfEQ, 0); }
+expr: REF(expr)  1 {/*TODO*/}
+expr: FACTORIAL(expr)  1 {/*TODO*/}
+expr: INCR(lv)  1 { fprintf(outfp, pfINCR, 1); /*TODO fazer f(i++) no funciona ainda*/ }
+expr: DECR(lv)  1 { fprintf(outfp, pfDECR, 1); }
+expr: POSINC(lv)  1 {/*TODO verificar se e igual ao de cima*/ fprintf(outfp, pfINCR, 1);}
+expr: POSDEC(lv)  1 {/*TODO verificar se e igual ao de cima*/ fprintf(outfp, pfDECR, 1);}
+expr:	ADD(expr,expr)	1 { fprintf(outfp, pfADD); }
+expr:	SUB(expr,expr)	1 { fprintf(outfp, pfSUB); }
+expr:	MUL(expr,expr)	1 { fprintf(outfp, pfMUL); }
+expr:	DIV(expr,expr)	1 { fprintf(outfp, pfDIV); }
+expr:	MOD(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	LT(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	GT(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	GE(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	LE(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	NE(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	EQ(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	AND(expr,expr)	1 { fprintf(outfp, pfMOD); }
+expr:	OR(expr,expr)	1 { fprintf(outfp, pfMOD); }
 expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), -1*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
 expr: CALL(ID,VOID) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), 0*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
-expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
-expr: INT 1 { fprintf(outfp, pfIMM, p->value.i); }
-expr: ATR(expr,lv) 1 { fprintf(outfp, pfSTORE); }
-expr: PTR(lv) 1 { fprintf(outfp, pfLOAD);}
 
 
 args: PARAMS(NIL,expr) 1 {}

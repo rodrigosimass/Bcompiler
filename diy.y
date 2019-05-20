@@ -64,8 +64,8 @@ file:
 	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, 0); }
 	| file public tipo ID init	{ IDnew($3->value.i, $4, 1); declare($2, 0, $3, $4, $5); }
 	| file public CONST tipo ID init	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, $6); }
-	| file public tipo ID { enter($2, $3->value.i, $4); } finit { function($2, $3, $4, $6,pos); pos=0;}
-	| file public VOID ID { enter($2, 4, $4); } finit { function($2, intNode(VOID, 4), $4, $6,pos); pos=0;}
+	| file public tipo ID { enter($2, $3->value.i, $4); pos = 8;} finit { function($2, $3, $4, $6,pos); pos=0;}
+	| file public VOID ID { enter($2, 4, $4); pos = 8;} finit { function($2, intNode(VOID, 4), $4, $6,pos); pos=0;}
 	;
 
 public:               { $$ = 0; }
@@ -97,8 +97,8 @@ blocop: ';'   { $$ = nilNode(NIL);}
         | bloco ';'   { $$ = $1; }
         ;
 
-params: param             
-	| params ',' param      { $$ = binNode(',', $1, $3); pos+=4;}
+params: param             {pos+=4;}
+	| params ',' param      { $$ = binNode(',', $1, $3);pos+=4;}
 	;
 
 bloco: '{' { IDpush(); pos = -8;} decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop();}

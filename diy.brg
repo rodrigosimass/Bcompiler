@@ -15,6 +15,8 @@ static char *extrns[100]; /* emit externs at the end only */
 static int extcnt;
 char *dupstr(const char *s);
 
+static long brklbl[20], brkcnt; /* break labels */
+
 char *mklbl(int n) {
   static char buf[20];
   sprintf(buf, "_i%d", n);
@@ -63,6 +65,21 @@ list: DECL(list,base) 1 {}
 base: VOID 1 {}
 base: expr 1 {}
 base: bloco 1 {}
+base: ELSE(if,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
+base: IF(cond,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
+
+base:	WHILE(do,cond)	 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(p))->place), mklbl(LEFT_CHILD(p)->place)); }
+do:	DO(begin,stmt) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
+begin:	START		 1 { p->place = ++lbl; fprintf(outfp, pfLABEL, mklbl(lbl));}
+
+if:	IF(cond,stmt)	1 { p->place = ++lbl; fprintf(outfp, pfJMP pfLABEL, mklbl(p->place), mklbl(LEFT_CHILD(p)->place)); }
+cond:	expr		1 { p->place = ++lbl; fprintf(outfp, pfJZ, mklbl(p->place)); }
+
+stmt: base 1 {}
+stmt: brk 1 {}
+
+brk: BREAK 1 {/*TODO*/}
+brk: CONTINUE 1 {/*TODO*/}
 
 lv: ID 1 {}
 lv: LOCAL 1 { fprintf(outfp, pfLOCAL, p->value.i * (pfWORD/4));}   
@@ -86,16 +103,18 @@ expr:	SUB(expr,expr)	1 { fprintf(outfp, pfSUB); }
 expr:	MUL(expr,expr)	1 { fprintf(outfp, pfMUL); }
 expr:	DIV(expr,expr)	1 { fprintf(outfp, pfDIV); }
 expr:	MOD(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	LT(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	GT(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	GE(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	LE(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	NE(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	EQ(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	AND(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr:	OR(expr,expr)	1 { fprintf(outfp, pfMOD); }
-expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), -1*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
-expr: CALL(ID,VOID) 1  {fprintf(outfp, pfCALL pfTRASH pfPUSH, mkfunc(LEFT_CHILD(p)->value.s), 0*(int)(pfWORD*(RIGHT_CHILD(p)->place))); }
+expr:	LT(expr,expr)	1 { fprintf(outfp, pfLT); }
+expr:	GT(expr,expr)	1 { fprintf(outfp, pfGT); }
+expr:	GE(expr,expr)	1 { fprintf(outfp, pfGE); }
+expr:	LE(expr,expr)	1 { fprintf(outfp, pfLE); }
+expr:	NE(expr,expr)	1 { fprintf(outfp, pfNE); }
+expr:	EQ(expr,expr)	1 { fprintf(outfp, pfEQ); }
+expr:	AND(expr,expr)	1 { fprintf(outfp, pfAND); }
+expr:	OR(expr,expr)	1 { fprintf(outfp, pfOR); }
+expr: CALL(ID,args) 1  {fprintf(outfp, pfCALL pfTRASH, mkfunc(LEFT_CHILD(p)->value.s), -1*(int)(pfWORD*(RIGHT_CHILD(p)->place)));
+                        if(IDfind(LEFT_CHILD(p)->value.s, 0)!=24) fprintf(outfp,pfPUSH);}
+expr: CALL(ID,VOID) 1  {fprintf(outfp, pfCALL pfTRASH, mkfunc(LEFT_CHILD(p)->value.s), 0*(int)(pfWORD*(RIGHT_CHILD(p)->place)));
+                        if(IDfind(LEFT_CHILD(p)->value.s, 0)!=24) fprintf(outfp,pfPUSH);}
 
 
 args: PARAMS(NIL,expr) 1 {}

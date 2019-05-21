@@ -11,5 +11,7 @@ public integer entry (integer argc, string *argv, string *envp) {
   i := add(j,i)
   printi((i))
   println()
+  printi(i*2)
+  println()
   entry := 0
 };

@@ -1,0 +1,25 @@
+public void prints(string s)
+public void printi(integer i)
+public void println()
+public integer entry (integer argc, string *argv, string *envp) {
+  integer i
+  i := 10
+  do {
+
+    printi(i)
+    println()
+    i := i - 1;
+
+    } while i>0;
+
+    i := 10
+  do {
+      
+    printi(i)
+    println()
+    i := i - 1;
+
+    } while i>0;
+
+  entry := 0
+};

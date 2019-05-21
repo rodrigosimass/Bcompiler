@@ -24,6 +24,7 @@ static char *fpar;
 extern FILE *outfp;
 static char *mkfunc(char *s);
 int pos;
+static void outstr(char *s);
 %}
 
 %union {
@@ -217,11 +218,26 @@ char **yynames =
 
 void declare(int pub, int cnst, Node *type, char *name, Node *value)
 {
-  int typ;
+  int typ=type->value.i;
+	/*value=0 quando nao é inicializado e é diferente de 0 CC*/
   if (!value) {
+		fprintf(outfp, pfGLOBL pfBSS pfALIGN pfLABEL, name, pfOBJ, name);
     if (!pub && cnst) yyerror("local constants must be initialised");
-    return;
-  }
+    	return;
+  } else {
+		/*DECLARACAO*/
+		if (cnst || typ==2) {
+			fprintf(outfp, pfGLOBL pfRODATA pfALIGN pfLABEL, name, pfOBJ, name);
+		} else {
+			fprintf(outfp, pfGLOBL pfDATA pfALIGN pfLABEL, name, pfOBJ, name);
+		}
+		/*INICIALIZACAO*/
+		if (typ==1)
+			fprintf(outfp, pfINTEGER, value->value.i);
+		if (typ==2)
+			outstr(value->value.s);
+
+	}
   if (value->attrib = INT && value->value.i == 0 && type->value.i > 10)
   	return; /* NULL pointer */
   if ((typ = value->info) % 10 > 5) typ -= 5;
@@ -333,4 +349,9 @@ void function(int pub, Node *type, char *name, Node *body,int posi)
 		yyselect(body);
 		fprintf(outfp, pfEXTRN, mkfunc(name));
 	}
+}
+
+static void outstr(char *s) {
+  while (*s) fprintf(outfp, pfCHAR, (unsigned char)*s++);
+  fprintf(outfp, pfCHAR, 0);
 }

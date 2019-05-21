@@ -68,6 +68,18 @@ base: bloco 1 {}
 base: ELSE(if,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
 base: IF(cond,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
 
+%!---FOR LOOPS---
+base: DECL(expr,FOR(IN(begin,LE(expr,condup)),doup)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(p))->place-1)); }
+condup:	expr		1 { p->place = ++lbl; fprintf(outfp, pfLE pfJZ, mklbl(p->place)); }
+doup: DECL(stmt,step) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
+
+base: DECL(expr,FOR(IN(begin,GE(expr,conddn)),dodn)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(p))->place-1)); }
+conddn:	expr		1 { p->place = ++lbl; fprintf(outfp, pfGE pfJZ, mklbl(p->place)); }
+dodn: DECL(stmt,step) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
+
+step: INT 1 {}
+step: expr 1 {}
+
 base:	WHILE(do,cond)	 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(p))->place), mklbl(LEFT_CHILD(p)->place)); }
 do:	DO(begin,stmt) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
 begin:	START		 1 { p->place = ++lbl; fprintf(outfp, pfLABEL, mklbl(lbl));}

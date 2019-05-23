@@ -1,0 +1,11 @@
+public void printd(number n)
+public void println()
+integer x := 5
+public number pi(){
+  pi := 0.31415E1
+};
+public integer entry (integer argc, string *argv, string *envp) {
+  printd(pi());
+  println()
+  entry := 0
+};

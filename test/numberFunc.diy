@@ -1,0 +1,12 @@
+public number getPI() {
+    getPI := 0.31415E1
+};
+public void prints(string s)
+public void printd(number d)
+
+public integer entry (integer argc, string *argv, string *envp) {
+  prints("pi = ")
+  printd(getPI())
+  prints("\n")
+  entry := 0
+};

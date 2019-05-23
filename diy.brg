@@ -99,8 +99,8 @@ lv: LOCAL 1 { fprintf(outfp, pfLOCAL, p->value.i * (pfWORD/4));}
 lv: INDEX(lv,expr) { fprintf(outfp, pfIMM pfMUL pfADD, pfWORD); }
 lv: INDEX(lv,expr) { fprintf(outfp, pfIMM pfMUL pfADD, pfWORD); }  
 
-expr: PTR(lv) 1 { fprintf(outfp, pfLOAD);}
-expr: PTR(PTR(lv)) 1 { fprintf(outfp, pfLOAD pfLOAD); }
+expr: PTR(lv) 1 { if(LEFT_CHILD(p)->info==3 || LEFT_CHILD(p)->info==8 )fprintf(outfp, pfLOAD2); else fprintf(outfp, pfLOAD);}
+expr: PTR(PTR(lv)) 1 { if(LEFT_CHILD(p)->info==3 || LEFT_CHILD(p)->info==8 )fprintf(outfp, pfLOAD pfLOAD2); else fprintf(outfp, pfLOAD pfLOAD);}
 
 expr: ATR(expr,lv) 1 { fprintf(outfp, pfSTORE); }
 assign: expr		1 { fprintf(outfp, pfDUP); }
@@ -111,11 +111,11 @@ expr:	ATR(expr,ID)	1 { fprintf(outfp, pfDUP pfADDRA, RIGHT_CHILD(p)->value.s); }
 
 expr: INT 1 { fprintf(outfp, pfIMM, p->value.i); }
 expr: STR 1 { lbl++; fprintf(outfp, pfRODATA pfALIGN pfLABEL, mklbl(lbl));outstr(p->value.s); fprintf(outfp, pfTEXT pfADDR, mklbl(lbl)); }
-expr: REAL 1 {}
+expr: REAL 1 {fprintf(outfp, pfDOUBLE, p->value.r);}
 expr: UMINUS(expr)  1 { fprintf(outfp, pfNEG); }
 expr: NOT(expr)  1 { fprintf(outfp, pfIMM pfEQ, 0); }
 expr: REF(lv)  1 {/* No code lv will LOCAL or ADDR*/}
-expr: FACTORIAL(expr)  1 {fprintf(outfp, pfCALL pfTRASH pfPUSH, "_factorial", 4);}
+expr: FACTORIAL(expr)  1 {fprintf(outfp, pfEXTRN pfCALL pfTRASH pfDPUSH,"_factorial", "_factorial", 4);}
 expr: INCR(lv)  1 { fprintf(outfp, pfINCR, 1); }
 expr: DECR(lv)  1 { fprintf(outfp, pfDECR, 1); }
 expr: POSINC(lv)  1 { fprintf(outfp, pfDUP pfLOAD pfSWAP pfINCR, 1); }

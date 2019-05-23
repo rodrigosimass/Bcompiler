@@ -66,7 +66,7 @@ file:
 	| file public CONST tipo ID ';'	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, 0); }
 	| file public tipo ID init	{ IDnew($3->value.i, $4, 1); declare($2, 0, $3, $4, $5); }
 	| file public CONST tipo ID init	{ IDnew($4->value.i+5, $5, 1); declare($2, 1, $4, $5, $6); }
-	| file public tipo ID { enter($2, $3->value.i, $4); pos = 8;} finit { function($2, $3, $4, $6,pos); pos=0;}
+	| file public tipo ID { enter($2, $3->value.i, $4); if($3->value.i!=3)pos = 8; else pos=12;} finit { function($2, $3, $4, $6,pos); pos=0;}
 	| file public VOID ID { enter($2, 4, $4); pos = 8;} finit { function($2, intNode(VOID, 4), $4, $6,pos); pos=0;}
 	;
 
@@ -239,7 +239,7 @@ void declare(int pub, int cnst, Node *type, char *name, Node *value)
 		if (typ==2)
 			outstr(value->value.s);
 		if (typ==3)
-			fprintf(outfp, pfFLOAT, value->value.r);
+			fprintf(outfp, pfDOUBLE, value->value.r);
 
 	}
   if (value->attrib = INT && value->value.i == 0 && type->value.i > 10)
@@ -345,7 +345,11 @@ void function(int pub, Node *type, char *name, Node *body,int posi)
 		fprintf(outfp, pfTEXT pfALIGN pfGLOBL pfLABEL pfENTER, mkfunc(name), pfFUNC, mkfunc(name), posi * -1 * (pfWORD/4));
 		yyselect(body);
 		fprintf(outfp, pfLOCAL, -4);
-		fprintf(outfp, pfLOAD);
+		
+		if(type->value.i != 3) {
+			fprintf(outfp, pfLOAD);
+		}
+		else fprintf(outfp, pfLOAD2);
 
 		fprintf(outfp, pfPOP pfLEAVE pfRET);
 	} else {

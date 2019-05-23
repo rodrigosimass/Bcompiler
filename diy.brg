@@ -69,12 +69,12 @@ base: ELSE(if,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
 base: IF(cond,stmt) 1 { fprintf(outfp, pfLABEL, mklbl(LEFT_CHILD(p)->place)); }
 
 %!---FOR UP---
-base: DECL(expr,FOR(IN(begin,LE(expr,condup)),doup)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(p))->place-1)); }
+base: DECL(expr,FOR(IN(begin,LE(expr,condup)),doup)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(LEFT_CHILD(RIGHT_CHILD(p))))->place)); }
 condup:	expr		1 { p->place = ++lbl; fprintf(outfp, pfLE pfJZ, mklbl(p->place)); }
 doup: DECL(stmt,step) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
 
 %!---FOR DN---
-base: DECL(expr,FOR(IN(begin,GE(expr,conddn)),dodn)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(p))->place-1)); }
+base: DECL(expr,FOR(IN(begin,GE(expr,conddn)),dodn)) 1 { brkcnt--; fprintf(outfp, pfJMP pfLABEL, mklbl(LEFT_CHILD(LEFT_CHILD(RIGHT_CHILD(p)))->place), mklbl(RIGHT_CHILD(RIGHT_CHILD(LEFT_CHILD(RIGHT_CHILD(p))))->place)); }
 conddn:	expr		1 { p->place = ++lbl; fprintf(outfp, pfGE pfJZ, mklbl(p->place)); }
 dodn: DECL(stmt,step) 1 { p->place = (brklbl[++brkcnt] = ++lbl); lbl--;}
 
@@ -91,7 +91,7 @@ cond:	expr		1 { p->place = ++lbl; fprintf(outfp, pfJZ, mklbl(p->place)); }
 stmt: base 1 {}
 stmt: brk 1 {}
 
-brk: BREAK 1 {/*TODO*/}
+brk: BREAK 1 {fprintf(outfp,pfJMP,brklbl[brkcnt-1]);}
 brk: CONTINUE 1 {/*TODO*/}
 
 lv: ID 1 { fprintf(outfp, pfADDR, p->value.s);}   

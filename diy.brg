@@ -115,11 +115,11 @@ expr: REAL 1 {}
 expr: UMINUS(expr)  1 { fprintf(outfp, pfNEG); }
 expr: NOT(expr)  1 { fprintf(outfp, pfIMM pfEQ, 0); }
 expr: REF(lv)  1 {/* No code lv will LOCAL or ADDR*/}
-expr: FACTORIAL(expr)  1 {/*TODO*/}
-expr: INCR(lv)  1 { fprintf(outfp, pfINCR, 1); /*TODO fazer f(i++) no funciona ainda*/ }
+expr: FACTORIAL(expr)  1 {fprintf(outfp, pfCALL pfTRASH pfPUSH, "_factorial", 4);}
+expr: INCR(lv)  1 { fprintf(outfp, pfINCR, 1); }
 expr: DECR(lv)  1 { fprintf(outfp, pfDECR, 1); }
-expr: POSINC(lv)  1 { fprintf(outfp, pfDUP pfLOAD pfSWAP pfINCR, RIGHT_CHILD(p)->value.i); }
-expr: POSDEC(lv)  1 { fprintf(outfp, pfDUP pfLOAD pfSWAP pfDECR, RIGHT_CHILD(p)->value.i); }
+expr: POSINC(lv)  1 { fprintf(outfp, pfDUP pfLOAD pfSWAP pfINCR, 1); }
+expr: POSDEC(lv)  1 { fprintf(outfp, pfDUP pfLOAD pfSWAP pfDECR, 1); }
 expr:	ADD(expr,expr)	1 { fprintf(outfp, pfADD); }
 expr:	SUB(expr,expr)	1 { fprintf(outfp, pfSUB); }
 expr:	MUL(expr,expr)	1 { fprintf(outfp, pfMUL); }

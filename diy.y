@@ -24,6 +24,7 @@ static char *fpar;
 extern FILE *outfp;
 static char *mkfunc(char *s);
 int pos;
+int size;
 static void outstr(char *s);
 %}
 
@@ -98,19 +99,20 @@ blocop: ';'   { $$ = nilNode(NIL);}
         | bloco ';'   { $$ = $1; }
         ;
 
-params: param             {pos+=4;}
-	| params ',' param      { $$ = binNode(',', $1, $3);pos+=4;}
+params: param             {pos+=size;}
+	| params ',' param      { $$ = binNode(',', $1, $3);pos+=size;}
 	;
 
 bloco: '{' { IDpush(); pos = -8;} decls list end '}'    { $$ = binNode('{',binNode(';', $4, $5), $3); IDpop();}
 	;
 
 decls:                       { $$ = nilNode(NIL); }
-	| decls param ';'       { $$ = binNode(';', $1, $2); pos -= 4;}
+	| decls param ';'       { $$ = binNode(';', $1, $2); pos -= size;}
 	;
 
 param: tipo ID               { $$ = binNode(PARAM, $1, strNode(ID, $2));
                                   IDnew($1->value.i, $2, pos);
+																	if ($1->value.i!=3) size = 4; else size = 8;
 																	printf("LOCAL:(%d)%s tipo: %d\n", pos,$2, $1->value.i);
                                   if (IDlevel() == 1) fpar[++fpar[0]] = $1->value.i;
                                 }
@@ -236,6 +238,8 @@ void declare(int pub, int cnst, Node *type, char *name, Node *value)
 			fprintf(outfp, pfINTEGER, value->value.i);
 		if (typ==2)
 			outstr(value->value.s);
+		if (typ==3)
+			fprintf(outfp, pfFLOAT, value->value.r);
 
 	}
   if (value->attrib = INT && value->value.i == 0 && type->value.i > 10)

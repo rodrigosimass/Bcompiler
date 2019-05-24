@@ -2,11 +2,34 @@ public void printi(integer i)
 public void println()
 public void prints(string s)
 
+public integer double(integer i) {
+    double := i * 2
+};
+
 public integer entry (integer argc, string *argv, string *envp) {
     integer i
     integer j
     integer s
     s := 2
+    
+    i:=5
+    printi(i)
+    println()
+    printi(double(i))
+    println()
+
+    for i in 1 upto 10 do {
+        for j in 0 upto 5 do {
+            if j>5 then break;
+            else {
+                printi(i)
+                println()
+            }
+        }
+        
+    }
+    
+    
     for i in 1 upto 2 step 1 do {
         for j in 1 upto 3 step 1 do {
             printi(i)
@@ -24,7 +47,6 @@ public integer entry (integer argc, string *argv, string *envp) {
         }
     }
 
-    =<
     i := 1
     j := 1
     do {
@@ -35,5 +57,5 @@ public integer entry (integer argc, string *argv, string *envp) {
         } while j<3
         i++;
     } while i<10
-    =>
+    
 };

@@ -154,20 +154,22 @@ list: base
 	;
 
 args: expr		{ $$ = binNode(',', nilNode(NIL), $1); }
-	| args ',' expr { $$ = binNode(',', $1, $3); }
+	| expr ',' args { $$ = binNode(',', $3, $1); }
 	;
 
 lv: ID		{ long pos; int typ = IDfind($1, &pos);
-													//printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
+													printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
                           if (pos == 1) $$ = strNode(ID, $1);
                           else $$ = intNode(LOCAL, pos);
 			  $$->info = typ;
 			}
 	| ID '[' expr ']' { Node *n;
                             long pos; int siz, typ = IDfind($1, &pos);
+														printf("#### lv %s : pos= %ld , type= %d\n",$1,pos,typ);
                             if (typ / 10 != 1 && typ % 5 != 2) yyerror("not a pointer");
                             if (pos == 0) n = strNode(ID, $1);
                             else n = intNode(LOCAL, pos);
+														n->info=typ;
                             $$ = binNode('[', n, $3);
 			    if (typ >= 10) typ -= 10;
                             else if (typ % 5 == 2) typ = 1;
